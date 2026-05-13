@@ -129,7 +129,7 @@ function StudioEditor() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("brain");
-  const [suggestion, setSuggestion] = useState<BrainSuggestionPreview | null>(null);
+  const [suggestion, setSuggestion] = useState<AiSuggestion | null>(null);
 
   const c = data.client;
   const b = data.brain;
@@ -277,33 +277,46 @@ function StudioEditor() {
     { id: "client", label: "Klient (avansert)" },
   ];
 
-  function handleGenerate() {
-    const preview = suggestFromBrain({
-      ...brain,
-      audience: parseJson(brain.audience),
-      brand_keywords: parseJson(brain.brand_keywords),
-      tone_keywords: parseJson(brain.tone_keywords),
-      trust_points: parseJson(brain.trust_points),
-      services: parseJson(brain.services),
-      partners: parseJson(brain.partners),
-      faq: parseJson(brain.faq),
-    });
-    setSuggestion(preview);
+  async function handleGenerate() {
+    setBusy(true);
     setMsg(null);
+    try {
+      const brain_draft = {
+        ...brain,
+        audience: parseJson(brain.audience),
+        brand_keywords: parseJson(brain.brand_keywords),
+        tone_keywords: parseJson(brain.tone_keywords),
+        trust_points: parseJson(brain.trust_points),
+        services: parseJson(brain.services),
+        partners: parseJson(brain.partners),
+        faq: parseJson(brain.faq),
+      };
+      const result = await generateAiBrainSuggestion({
+        data: { client_id: c!.id, brain_draft },
+      });
+      setSuggestion(result as AiSuggestion);
+      if ((result as AiSuggestion).source === "fallback") {
+        setMsg("AI utilgjengelig — viser heuristisk forslag.");
+      }
+    } catch (err) {
+      setMsg(`Feil: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleApplySuggestion() {
     if (!suggestion) return;
     if (
       !confirm(
-        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe og klientens theme. Fortsette?",
+        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe, klientens theme og forsidens metadata. Fortsette?",
       )
     )
       return;
     setBusy(true);
     setMsg(null);
     try {
-      await applyBrainSuggestion({
+      await applyAiSuggestion({
         data: { client_id: c!.id, suggestion },
       });
       setSuggestion(null);
