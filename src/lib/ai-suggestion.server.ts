@@ -234,6 +234,7 @@ export async function generateAiSuggestion(input: {
   recipe: Record<string, unknown> | null;
   sections: unknown[];
   media_notes?: unknown[];
+  studio_references?: Record<string, unknown>[];
 }): Promise<AiSuggestion> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
@@ -241,6 +242,18 @@ export async function generateAiSuggestion(input: {
     fb.warnings = ["LOVABLE_API_KEY mangler — brukte heuristikk"];
     return fb;
   }
+
+  const studioRefsForPrompt = (input.studio_references ?? []).map((r) => ({
+    name: r.name,
+    reference_type: r.reference_type,
+    rank: r.rank,
+    what_works: r.what_works,
+    visual_principles: r.visual_principles,
+    conversion_principles: r.conversion_principles,
+    seo_principles: r.seo_principles,
+    component_patterns: r.component_patterns,
+    tone_patterns: r.tone_patterns,
+  }));
 
   const userPayload = {
     instruction:
@@ -251,6 +264,7 @@ export async function generateAiSuggestion(input: {
       recipe: input.recipe,
       sections_count: input.sections.length,
       media_notes: input.media_notes ?? [],
+      studio_brain_references: studioRefsForPrompt,
     },
     expected_format: {
       client: { description: "", theme: { primaryColor: "", backgroundColor: "", surfaceColor: "", textColor: "", radius: "", fontStyle: "" } },
