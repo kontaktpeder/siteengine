@@ -575,6 +575,60 @@ export type Database = {
           },
         ]
       }
+      studio_design_references: {
+        Row: {
+          avoid_copying: string
+          component_patterns: string | null
+          conversion_principles: string | null
+          created_at: string
+          id: string
+          name: string
+          rank: number
+          reference_type: string
+          reference_url: string | null
+          seo_principles: string | null
+          status: string
+          tone_patterns: string | null
+          updated_at: string
+          visual_principles: string | null
+          what_works: string | null
+        }
+        Insert: {
+          avoid_copying?: string
+          component_patterns?: string | null
+          conversion_principles?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          rank?: number
+          reference_type?: string
+          reference_url?: string | null
+          seo_principles?: string | null
+          status?: string
+          tone_patterns?: string | null
+          updated_at?: string
+          visual_principles?: string | null
+          what_works?: string | null
+        }
+        Update: {
+          avoid_copying?: string
+          component_patterns?: string | null
+          conversion_principles?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          rank?: number
+          reference_type?: string
+          reference_url?: string | null
+          seo_principles?: string | null
+          status?: string
+          tone_patterns?: string | null
+          updated_at?: string
+          visual_principles?: string | null
+          what_works?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
