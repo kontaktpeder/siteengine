@@ -1,11 +1,19 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
+  applyBrainSuggestion,
   getClientBundle,
+  saveHomePageSections,
   upsertBrain,
   upsertClient,
   upsertRecipe,
 } from "@/lib/admin.functions";
+import {
+  suggestFromBrain,
+  SUPPORTED_MODULE_TYPES,
+  type BrainSuggestionPreview,
+  type BrainSuggestionSection,
+} from "@/lib/suggest-from-brain";
 import type {
   Client,
   ClientBrain,
@@ -120,7 +128,8 @@ function StudioEditor() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("client");
+  const [tab, setTab] = useState<Tab>("brain");
+  const [suggestion, setSuggestion] = useState<BrainSuggestionPreview | null>(null);
 
   const c = data.client;
   const b = data.brain;
@@ -262,11 +271,50 @@ function StudioEditor() {
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "client", label: "Klient" },
     { id: "brain", label: "Client Brain" },
-    { id: "recipe", label: "Site Recipe" },
     { id: "sections", label: "Sections" },
+    { id: "recipe", label: "Site Recipe (avansert)" },
+    { id: "client", label: "Klient (avansert)" },
   ];
+
+  function handleGenerate() {
+    const preview = suggestFromBrain({
+      ...brain,
+      audience: parseJson(brain.audience),
+      brand_keywords: parseJson(brain.brand_keywords),
+      tone_keywords: parseJson(brain.tone_keywords),
+      trust_points: parseJson(brain.trust_points),
+      services: parseJson(brain.services),
+      partners: parseJson(brain.partners),
+      faq: parseJson(brain.faq),
+    });
+    setSuggestion(preview);
+    setMsg(null);
+  }
+
+  async function handleApplySuggestion() {
+    if (!suggestion) return;
+    if (
+      !confirm(
+        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe og klientens theme. Fortsette?",
+      )
+    )
+      return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await applyBrainSuggestion({
+        data: { client_id: c!.id, suggestion },
+      });
+      setSuggestion(null);
+      setMsg("Forslag tatt i bruk.");
+      router.invalidate();
+    } catch (err) {
+      setMsg(`Feil: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10">
@@ -378,6 +426,65 @@ function StudioEditor() {
 
       {tab === "brain" && (
         <>
+          <Section title="Generer forslag fra Client Brain">
+            <p className="text-sm text-muted-foreground">
+              Lag et forslag basert på det du har fylt inn under (lokal state — du
+              trenger ikke lagre Brain først). «Bruk forslag» erstatter alle
+              seksjoner på forsiden, oppdaterer Site Recipe og klientens theme.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handleGenerate}
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+              >
+                Generer forslag
+              </button>
+              {suggestion ? (
+                <>
+                  <button
+                    onClick={handleApplySuggestion}
+                    disabled={busy}
+                    className="rounded-full border border-primary bg-primary/10 px-5 py-2.5 text-sm font-medium text-primary disabled:opacity-50"
+                  >
+                    {busy ? "Tar i bruk…" : "Bruk forslag"}
+                  </button>
+                  <button
+                    onClick={() => setSuggestion(null)}
+                    className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
+                  >
+                    Avbryt
+                  </button>
+                </>
+              ) : null}
+            </div>
+            {suggestion ? (
+              <div className="mt-5 grid gap-3 rounded-xl border border-border bg-muted/30 p-5 text-sm">
+                <div className="grid gap-1 sm:grid-cols-2">
+                  <div><span className="text-muted-foreground">Arketype:</span> {suggestion.archetype}</div>
+                  <div><span className="text-muted-foreground">Site type:</span> {suggestion.site_type}</div>
+                  <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.primary_intent}</div>
+                  <div><span className="text-muted-foreground">Design direction:</span> {suggestion.design_direction}</div>
+                </div>
+                <div>
+                  <div className="mb-1 text-muted-foreground">Moduler ({suggestion.sections.length}):</div>
+                  <ol className="list-decimal pl-5">
+                    {suggestion.sections.map((s, i) => (
+                      <li key={i}>
+                        <span className="font-medium">{s.module_type}</span>
+                        <span className="text-muted-foreground"> · {s.variant}</span>
+                        {s.title ? <span className="text-muted-foreground"> — {s.title}</span> : null}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-muted-foreground">Se theme/recipe JSON</summary>
+                  <pre className="mt-2 overflow-x-auto rounded-lg bg-background p-3 text-xs">{JSON.stringify({ theme: suggestion.theme, variant_presets: suggestion.variant_presets, navigation: suggestion.navigation, footer: suggestion.footer }, null, 2)}</pre>
+                </details>
+              </div>
+            ) : null}
+          </Section>
+
           <Section title="Kjerne">
             <div className="grid gap-4">
               <Field label="Site type">
@@ -494,44 +601,195 @@ function StudioEditor() {
       )}
 
       {tab === "sections" && (
-        <Section title={`Sections${data.page ? ` på ${data.page.slug}` : ""}`}>
-          {data.sections.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Ingen sections enda. Bruk seed eller legg til via SQL/API.
-            </p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Module</th>
-                    <th className="px-4 py-3">Variant</th>
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Bg</th>
-                    <th className="px-4 py-3">Visible</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.sections.map((s) => (
-                    <tr key={s.id} className="border-t border-border">
-                      <td className="px-4 py-3 text-muted-foreground">{s.sort_order}</td>
-                      <td className="px-4 py-3 font-medium">{s.module_type}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.variant ?? "default"}</td>
-                      <td className="px-4 py-3">{s.title ?? <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.background_style ?? "—"}</td>
-                      <td className="px-4 py-3">{s.is_visible ? "Ja" : "Nei"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <p className="mt-4 text-xs text-muted-foreground">
-            Read-only i denne versjonen. Bruk «Seed Foreningen Opplev» for å regenerere standardsettet.
-          </p>
-        </Section>
+        <SectionsEditor
+          clientId={c.id}
+          initial={data.sections}
+          onSaved={() => {
+            setMsg("Seksjoner lagret.");
+            router.invalidate();
+          }}
+          onError={(m) => setMsg(`Feil: ${m}`)}
+        />
       )}
     </div>
+  );
+}
+
+function sectionToEditable(s: PageSection | BrainSuggestionSection, i: number): BrainSuggestionSection {
+  return {
+    module_type: s.module_type as BrainSuggestionSection["module_type"],
+    variant: s.variant ?? "default",
+    eyebrow: s.eyebrow ?? null,
+    title: s.title ?? null,
+    subtitle: s.subtitle ?? null,
+    body: (s as PageSection).body ?? null,
+    anchor_id: s.anchor_id ?? null,
+    background_style: s.background_style ?? null,
+    layout_style: s.layout_style ?? null,
+    cta_label: s.cta_label ?? null,
+    cta_href: s.cta_href ?? null,
+    content: ((s as PageSection).content as Record<string, unknown>) ?? {},
+    settings: ((s as PageSection).settings as Record<string, unknown>) ?? {},
+    is_visible: s.is_visible ?? true,
+    sort_order: typeof s.sort_order === "number" ? s.sort_order : i,
+  };
+}
+
+function SectionsEditor({
+  clientId,
+  initial,
+  onSaved,
+  onError,
+}: {
+  clientId: string;
+  initial: PageSection[];
+  onSaved: () => void;
+  onError: (msg: string) => void;
+}) {
+  const [rows, setRows] = useState<BrainSuggestionSection[]>(
+    initial.map(sectionToEditable),
+  );
+  const [busy, setBusy] = useState(false);
+
+  function update(i: number, patch: Partial<BrainSuggestionSection>) {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+  function remove(i: number) {
+    setRows((rs) => rs.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, sort_order: idx })));
+  }
+  function move(i: number, dir: -1 | 1) {
+    setRows((rs) => {
+      const copy = [...rs];
+      const j = i + dir;
+      if (j < 0 || j >= copy.length) return rs;
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+      return copy.map((r, idx) => ({ ...r, sort_order: idx }));
+    });
+  }
+  function add() {
+    setRows((rs) => [
+      ...rs,
+      {
+        module_type: "hero",
+        variant: "default",
+        content: {},
+        settings: {},
+        is_visible: true,
+        sort_order: rs.length,
+      },
+    ]);
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      await saveHomePageSections({ data: { client_id: clientId, sections: rows } });
+      onSaved();
+    } catch (err) {
+      onError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section title="Sections på forsiden">
+      <p className="text-sm text-muted-foreground">
+        Lagring erstatter alle seksjoner på forsiden. Felt for content/settings
+        bevares som JSON.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={add}
+          className="rounded-full border border-border bg-card px-4 py-2 text-sm hover:bg-accent"
+        >
+          + Legg til seksjon
+        </button>
+        <button
+          onClick={save}
+          disabled={busy}
+          className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {busy ? "Lagrer…" : "Lagre seksjoner"}
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4">
+        {rows.map((r, i) => (
+          <div key={i} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+              <span className="text-xs text-muted-foreground">#{i}</span>
+              <select
+                className={`${inputCls} max-w-[180px]`}
+                value={r.module_type}
+                onChange={(e) => update(i, { module_type: e.target.value as BrainSuggestionSection["module_type"] })}
+              >
+                {SUPPORTED_MODULE_TYPES.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <input
+                className={`${inputCls} max-w-[160px]`}
+                placeholder="variant"
+                value={r.variant}
+                onChange={(e) => update(i, { variant: e.target.value })}
+              />
+              <label className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={r.is_visible ?? true}
+                  onChange={(e) => update(i, { is_visible: e.target.checked })}
+                />
+                synlig
+              </label>
+              <div className="ml-auto flex gap-1">
+                <button onClick={() => move(i, -1)} className="rounded border border-border px-2 py-1 text-xs hover:bg-accent">↑</button>
+                <button onClick={() => move(i, 1)} className="rounded border border-border px-2 py-1 text-xs hover:bg-accent">↓</button>
+                <button onClick={() => remove(i)} className="rounded border border-destructive/40 px-2 py-1 text-xs text-destructive hover:bg-destructive/10">Slett</button>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Field label="Eyebrow"><input className={inputCls} value={r.eyebrow ?? ""} onChange={(e) => update(i, { eyebrow: e.target.value || null })} /></Field>
+              <Field label="Anchor id"><input className={inputCls} value={r.anchor_id ?? ""} onChange={(e) => update(i, { anchor_id: e.target.value || null })} /></Field>
+              <Field label="Title"><input className={inputCls} value={r.title ?? ""} onChange={(e) => update(i, { title: e.target.value || null })} /></Field>
+              <Field label="Subtitle"><input className={inputCls} value={r.subtitle ?? ""} onChange={(e) => update(i, { subtitle: e.target.value || null })} /></Field>
+              <Field label="Background style"><input className={inputCls} value={r.background_style ?? ""} onChange={(e) => update(i, { background_style: e.target.value || null })} /></Field>
+              <Field label="Layout style"><input className={inputCls} value={r.layout_style ?? ""} onChange={(e) => update(i, { layout_style: e.target.value || null })} /></Field>
+              <Field label="CTA label"><input className={inputCls} value={r.cta_label ?? ""} onChange={(e) => update(i, { cta_label: e.target.value || null })} /></Field>
+              <Field label="CTA href"><input className={inputCls} value={r.cta_href ?? ""} onChange={(e) => update(i, { cta_href: e.target.value || null })} /></Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Body">
+                <textarea rows={2} className={inputCls} value={r.body ?? ""} onChange={(e) => update(i, { body: e.target.value || null })} />
+              </Field>
+            </div>
+            <details className="mt-3">
+              <summary className="cursor-pointer text-xs text-muted-foreground">Avansert: content / settings JSON</summary>
+              <div className="mt-2 grid gap-3">
+                <JsonField
+                  label="Content"
+                  value={JSON.stringify(r.content ?? {}, null, 2)}
+                  onChange={(v) => {
+                    try { update(i, { content: JSON.parse(v || "{}") }); } catch { /* ignore parse errors while typing */ }
+                  }}
+                  rows={4}
+                />
+                <JsonField
+                  label="Settings"
+                  value={JSON.stringify(r.settings ?? {}, null, 2)}
+                  onChange={(v) => {
+                    try { update(i, { settings: JSON.parse(v || "{}") }); } catch { /* ignore */ }
+                  }}
+                  rows={3}
+                />
+              </div>
+            </details>
+          </div>
+        ))}
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen seksjoner. Bruk «+ Legg til seksjon» eller generer fra Client Brain.</p>
+        ) : null}
+      </div>
+    </Section>
   );
 }
