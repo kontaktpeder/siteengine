@@ -827,3 +827,218 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
     }
     return { ok: true, page_id: page.id, sections: rows.length, source: suggestion.source };
   });
+
+// ---------- Studio Brain (Taste Library) ----------
+
+export interface StudioReference {
+  id: string;
+  name: string;
+  reference_url: string | null;
+  reference_type: string;
+  status: string;
+  rank: number;
+  what_works: string | null;
+  visual_principles: string | null;
+  conversion_principles: string | null;
+  seo_principles: string | null;
+  component_patterns: string | null;
+  tone_patterns: string | null;
+  avoid_copying: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const listStudioReferences = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ references: StudioReference[]; adminAvailable: boolean }> => {
+    if (!hasStudioAdminAccess()) return { references: [], adminAvailable: false };
+    const { data, error } = await supabaseAdmin
+      .from("studio_design_references")
+      .select("*")
+      .order("rank", { ascending: false })
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return { references: (data ?? []) as StudioReference[], adminAvailable: true };
+  },
+);
+
+export const getStudioReference = createServerFn({ method: "GET" })
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const { data: row, error } = await supabaseAdmin
+      .from("studio_design_references")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error) throw error;
+    return row as StudioReference;
+  });
+
+export const upsertStudioReference = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      id?: string;
+      name: string;
+      reference_url?: string | null;
+      reference_type?: string;
+      status?: string;
+      rank?: number;
+      what_works?: string | null;
+      visual_principles?: string | null;
+      conversion_principles?: string | null;
+      seo_principles?: string | null;
+      component_patterns?: string | null;
+      tone_patterns?: string | null;
+      avoid_copying?: string;
+    }) => input,
+  )
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const payload = {
+      name: data.name,
+      reference_url: data.reference_url ?? null,
+      reference_type: data.reference_type ?? "general",
+      status: data.status ?? "draft",
+      rank: data.rank ?? 0,
+      what_works: data.what_works ?? null,
+      visual_principles: data.visual_principles ?? null,
+      conversion_principles: data.conversion_principles ?? null,
+      seo_principles: data.seo_principles ?? null,
+      component_patterns: data.component_patterns ?? null,
+      tone_patterns: data.tone_patterns ?? null,
+      avoid_copying:
+        data.avoid_copying ??
+        "Do not copy text, brand identity, layout 1:1, assets or proprietary design. Extract principles only.",
+      updated_at: new Date().toISOString(),
+    };
+    if (data.id) {
+      const { data: row, error } = await supabaseAdmin
+        .from("studio_design_references")
+        .update(payload)
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row as StudioReference;
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("studio_design_references")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row as StudioReference;
+  });
+
+export const archiveStudioReference = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const { error } = await supabaseAdmin
+      .from("studio_design_references")
+      .update({ status: "archived", updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// Mapping av brain → relevante reference_type
+function inferRelevantTypes(brain: Record<string, unknown>): string[] {
+  const haystack = [
+    brain.site_type,
+    brain.primary_goal,
+    brain.secondary_goal,
+    brain.flagship_story,
+    brain.desired_feelings,
+    brain.raw_notes,
+    brain.short_description,
+    brain.long_description,
+    Array.isArray(brain.tone_keywords) ? (brain.tone_keywords as unknown[]).join(" ") : "",
+    Array.isArray(brain.brand_keywords) ? (brain.brand_keywords as unknown[]).join(" ") : "",
+  ]
+    .filter((x): x is string => typeof x === "string")
+    .join(" ")
+    .toLowerCase();
+
+  const scores: Record<string, number> = {};
+  const bump = (t: string, n = 1) => {
+    scores[t] = (scores[t] ?? 0) + n;
+  };
+
+  // nonprofit
+  if (/nonprofit|forening|frivillig|trygg|barn|inklud|samfunn|veldedig|støtte|medlem/.test(haystack))
+    bump("nonprofit", 3);
+  // lead_generation
+  if (/kurs|opplæring|lead|forespør|booking|kontakt oss|tilbud|påmeld|kunde|salg/.test(haystack))
+    bump("lead_generation", 3);
+  // food_brand
+  if (/mat|smak|kjøkken|popup|restaurant|drikke|råvare|meny|gastro/.test(haystack))
+    bump("food_brand", 3);
+  // portfolio
+  if (/portfolio|portefølj|case|prosjekt|studio|byrå|arbeider|verker/.test(haystack))
+    bump("portfolio", 3);
+  // campaign
+  if (/kampanje|aksjon|mobilis|launch|lansering/.test(haystack)) bump("campaign", 2);
+  // local_business
+  if (/lokal|by|kommune|åpningstider|adresse|nærmiljø/.test(haystack)) bump("local_business", 2);
+
+  // also use direct site_type if it matches
+  const siteType = typeof brain.site_type === "string" ? brain.site_type : "";
+  if (siteType) bump(siteType, 4);
+
+  return Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t]) => t);
+}
+
+export async function fetchRelevantStudioReferences(
+  brain: Record<string, unknown>,
+  limit = 3,
+): Promise<StudioReference[]> {
+  if (!hasStudioAdminAccess()) return [];
+  const types = inferRelevantTypes(brain);
+
+  if (types.length) {
+    const { data } = await supabaseAdmin
+      .from("studio_design_references")
+      .select("*")
+      .eq("status", "approved")
+      .in("reference_type", types)
+      .order("rank", { ascending: false })
+      .limit(limit);
+    if (data && data.length) return data as StudioReference[];
+  }
+
+  // fallback: top approved general
+  const { data: fallback } = await supabaseAdmin
+    .from("studio_design_references")
+    .select("*")
+    .eq("status", "approved")
+    .eq("reference_type", "general")
+    .order("rank", { ascending: false })
+    .limit(limit);
+  if (fallback && fallback.length) return fallback as StudioReference[];
+
+  // last resort: any approved
+  const { data: any } = await supabaseAdmin
+    .from("studio_design_references")
+    .select("*")
+    .eq("status", "approved")
+    .order("rank", { ascending: false })
+    .limit(limit);
+  return (any ?? []) as StudioReference[];
+}
+
+export const getRelevantStudioReferencesForBrain = createServerFn({ method: "POST" })
+  .inputValidator((input: { client_id: string }) => input)
+  .handler(async ({ data }): Promise<{ references: StudioReference[] }> => {
+    if (!hasStudioAdminAccess()) return { references: [] };
+    const { data: brains } = await supabaseAdmin
+      .from("client_brains")
+      .select("*")
+      .eq("client_id", data.client_id)
+      .limit(1);
+    const brain = (brains?.[0] as Record<string, unknown>) ?? {};
+    const refs = await fetchRelevantStudioReferences(brain);
+    return { references: refs };
+  });
