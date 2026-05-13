@@ -1023,13 +1023,13 @@ export async function fetchRelevantStudioReferences(
   if (fallback && fallback.length) return fallback as StudioReference[];
 
   // last resort: any approved
-  const { data: any } = await supabaseAdmin
+  const { data: anyApproved } = await supabaseAdmin
     .from("studio_design_references")
     .select("*")
     .eq("status", "approved")
     .order("rank", { ascending: false })
     .limit(limit);
-  return (any ?? []) as StudioReference[];
+  return (anyApproved ?? []) as StudioReference[];
 }
 
 export const getRelevantStudioReferencesForBrain = createServerFn({ method: "POST" })
