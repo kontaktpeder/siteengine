@@ -274,6 +274,12 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
         (n) => n && typeof n.label === "string" && typeof n.href === "string",
       ),
       footer: asObj(recipeIn.footer),
+      content_depth: VALID_CONTENT_DEPTH.has(cd) ? cd : "balanced",
+      storytelling_mode: VALID_STORYTELLING.has(sm) ? sm : "editorial",
+      visual_proof_level: VALID_VISUAL_PROOF.has(vp) ? vp : "medium",
+      rhythm_strategy: VALID_RHYTHM.has(rs) ? rs : "varied",
+      compression_policy: VALID_COMPRESSION.has(cp) ? cp : "preserve_detail",
+      creative_direction: clampString(recipeIn.creative_direction, ""),
     },
     home_page: {
       title: clampString(homeIn.title, "Forsiden"),
