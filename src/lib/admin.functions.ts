@@ -593,7 +593,8 @@ export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
       recipe: (recipes?.[0] as Record<string, unknown>) ?? null,
       sections,
     });
-    return suggestion;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return suggestion as any;
   });
 
 export const applyAiSuggestion = createServerFn({ method: "POST" })
