@@ -251,7 +251,7 @@ export const seedOpplev = createServerFn({ method: "POST" }).handler(async () =>
 
   // 5. Replace sections
   await supabaseAdmin.from("page_sections").delete().eq("page_id", page.id);
-  const sectionRows = seed.sections.map((s, i) => ({
+  const sectionRows = seed.sections.map((s: Record<string, unknown>, i: number) => ({
     ...s,
     page_id: page!.id,
     sort_order: i,
