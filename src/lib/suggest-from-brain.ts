@@ -69,6 +69,9 @@ type BrainLike = {
   cta_secondary_label?: string | null;
   cta_secondary_href?: string | null;
   site_type?: string | null;
+  solution_statement?: string | null;
+  problem_statement?: string | null;
+  vision?: string | null;
 };
 
 const KEYWORDS: Record<Exclude<BrainArchetype, "default">, RegExp[]> = {
