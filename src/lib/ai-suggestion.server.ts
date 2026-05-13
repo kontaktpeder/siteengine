@@ -63,6 +63,12 @@ export interface AiSuggestion {
     enabled_modules: string[];
     navigation: { label: string; href: string }[];
     footer: Record<string, JsonLike>;
+    content_depth: string;
+    storytelling_mode: string;
+    visual_proof_level: string;
+    rhythm_strategy: string;
+    compression_policy: string;
+    creative_direction: string;
   };
   home_page: {
     title: string;
