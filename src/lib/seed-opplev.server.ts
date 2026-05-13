@@ -10,11 +10,27 @@ export const OPPLEV_SEED = {
     address: null,
     organization_number: null,
     primary_domain: null,
+    description:
+      "Foreningen Opplev skaper trygge arenaer for mestring, tilhørighet og inkludering — der alle skal få sitte i førersetet.",
+    logo_url: null,
+    favicon_url: null,
+    theme: {
+      // Fiken-inspired calm mint, used as overrides on top of base tokens.
+      primaryColor: "oklch(0.55 0.09 168)",
+      backgroundColor: "oklch(0.985 0.012 95)",
+      surfaceColor: "oklch(1 0 0)",
+      textColor: "oklch(0.22 0.02 160)",
+      borderColor: "oklch(0.9 0.02 130)",
+      radius: "1rem",
+      fontStyle: "mixed",
+    },
   },
   brain: {
-    site_type: "landing_page",
-    primary_goal: "Bygge tillit og synliggjøre tilbudet til barn, unge, familier og samarbeidspartnere.",
-    secondary_goal: "Gjøre det enkelt å ta kontakt for samarbeid, deltakelse og støtte.",
+    site_type: "nonprofit",
+    primary_goal:
+      "Bygge tillit og synliggjøre tilbudet til barn, unge, familier og samarbeidspartnere.",
+    secondary_goal:
+      "Gjøre det enkelt å ta kontakt for samarbeid, deltakelse og støtte.",
     audience: [
       { label: "Barn og unge", description: "Barn og unge med fysiske og sosiale utfordringer." },
       { label: "Fosterfamilier", description: "Fosterbarn sammen med fosterforeldre og biologiske foreldre." },
@@ -41,7 +57,7 @@ export const OPPLEV_SEED = {
     problem_statement:
       "For mange barn, unge og familier opplever at vanlige aktiviteter ikke er tilrettelagt for dem. Det skaper utenforskap.",
     solution_statement:
-      "Vi tilrettelegger arenaer som Kragerø Action Park, gokart for rullestolbrukere, ledsagerkart og aktiviteter for blinde og svaksynte — slik at alle kan delta på like vilkår.",
+      "Vi tilrettelegger arenaer som Kragerø Action Park, gokart for rullestolbrukere, ledsagerkjøring og aktiviteter for blinde og svaksynte — slik at alle kan delta på like vilkår.",
     trust_points: [
       { label: "Universell utforming", description: "Tilrettelagt for ulike behov fra første stund." },
       { label: "Erfarne ledsagere", description: "Trygge voksne med kompetanse på tilrettelegging." },
@@ -49,32 +65,12 @@ export const OPPLEV_SEED = {
       { label: "Fokus på mestring", description: "Aktivitetene er bygget for opplevelsen, ikke prestasjonen." },
     ],
     services: [
-      {
-        title: "Tilrettelagt gokart",
-        description:
-          "Gokart for rullestolbrukere på Kragerø Action Park — alle skal i førersetet, bokstavelig talt.",
-      },
-      {
-        title: "Ledsagerkart",
-        description: "Tilbud som gjør det enklere å delta sammen med ledsager.",
-      },
-      {
-        title: "Aktiviteter for blinde og svaksynte",
-        description: "Tilpassede opplevelser med god tilrettelegging og trygge rammer.",
-      },
-      {
-        title: "Tegnspråkvennlige arrangementer",
-        description: "Aktiviteter med tegnspråk og tilrettelegging for døve og hørselshemmede.",
-      },
-      {
-        title: "Fosterfamiliesamlinger",
-        description:
-          "Møteplasser for fosterbarn sammen med foster- og biologiske foreldre.",
-      },
-      {
-        title: "Trygge arenaer for barn og unge",
-        description: "Tilrettelagte tilbud for barn og unge med fysiske og sosiale utfordringer.",
-      },
+      { title: "Tilrettelagt gokart", description: "Gokart for rullestolbrukere på Kragerø Action Park — alle skal i førersetet, bokstavelig talt." },
+      { title: "Ledsagerkjøring", description: "Trygge runder med erfaren ledsager ved siden av deltakeren." },
+      { title: "Aktiviteter for blinde og svaksynte", description: "Tilpassede opplevelser med god tilrettelegging og trygge rammer." },
+      { title: "Tegnspråkvennlige arrangementer", description: "Aktiviteter med tegnspråk og tilrettelegging for døve og hørselshemmede." },
+      { title: "Fosterfamiliesamlinger", description: "Møteplasser for fosterbarn sammen med foster- og biologiske foreldre." },
+      { title: "Trygge arenaer for barn og unge", description: "Tilrettelagte tilbud for barn og unge med fysiske og sosiale utfordringer." },
     ],
     partners: [
       { name: "Kragerø Action Park" },
@@ -83,26 +79,10 @@ export const OPPLEV_SEED = {
       { name: "Lokale bedrifter og støttespillere" },
     ],
     faq: [
-      {
-        question: "Hvem er tilbudet for?",
-        answer:
-          "Foreningen Opplev er for barn, unge og familier som trenger ekstra tilrettelegging — fosterfamilier, tegnspråkmiljø, blinde og svaksynte, og barn og unge med fysiske eller sosiale utfordringer.",
-      },
-      {
-        question: "Koster det noe å delta?",
-        answer:
-          "Vi jobber for at terskelen skal være så lav som mulig. Ta kontakt for informasjon om det enkelte arrangement.",
-      },
-      {
-        question: "Hvordan kan vi samarbeide?",
-        answer:
-          "Vi tar gjerne en prat med kommuner, organisasjoner og bedrifter som vil bidra. Send oss en melding, så finner vi en god form.",
-      },
-      {
-        question: "Er aktivitetene trygge?",
-        answer:
-          "Ja. Alle aktiviteter har erfarne ledsagere, og vi tilrettelegger ut fra hver enkelt deltakers behov.",
-      },
+      { question: "Hvem er tilbudet for?", answer: "Foreningen Opplev er for barn, unge og familier som trenger ekstra tilrettelegging — fosterfamilier, tegnspråkmiljø, blinde og svaksynte, og barn og unge med fysiske eller sosiale utfordringer." },
+      { question: "Koster det noe å delta?", answer: "Vi jobber for at terskelen skal være så lav som mulig. Ta kontakt for informasjon om det enkelte arrangement." },
+      { question: "Hvordan kan vi samarbeide?", answer: "Vi tar gjerne en prat med kommuner, organisasjoner og bedrifter som vil bidra. Send oss en melding, så finner vi en god form." },
+      { question: "Er aktivitetene trygge?", answer: "Ja. Alle aktiviteter har erfarne ledsagere, og vi tilrettelegger ut fra hver enkelt deltakers behov." },
     ],
     cta_primary_label: "Ta kontakt",
     cta_primary_href: "mailto:post@opplev.no",
@@ -113,10 +93,26 @@ export const OPPLEV_SEED = {
   },
   recipe: {
     recipe_type: "trust_based_nonprofit",
+    site_type: "nonprofit",
+    primary_intent: "build_trust",
     design_direction: "fiken_calm_mint",
     color_palette: { primary: "mint", background: "cream", accent: "deep_mint" },
     typography: { display: "Fraunces", body: "Inter" },
     layout_preferences: { density: "airy", radius: "rounded" },
+    module_strategy: {
+      lead_with: "trust",
+      tone: "rolig_troverdig",
+      avoid: ["salgspress", "motorsport_estetikk"],
+      prefer: ["info_først", "helse_offentlig", "pauserom_følelse"],
+    },
+    variant_presets: {
+      hero: "editorial",
+      mission: "simple",
+      services_grid: "cards",
+      partners: "text_list",
+      faq: "accordion",
+      contact_cta: "soft",
+    },
     enabled_modules: [
       "hero",
       "trust_strip",
@@ -152,10 +148,16 @@ export const OPPLEV_SEED = {
   sections: [
     {
       module_type: "hero",
-      variant: "default",
+      variant: "editorial",
+      eyebrow: "Foreningen Opplev",
       title: "Alle skal i førersetet.",
       subtitle:
-        "Foreningen Opplev skaper trygge arenaer for mestring, tilhørighet og inkludering.",
+        "Vi skaper trygge arenaer for mestring, tilhørighet og inkludering — for de som trenger litt ekstra tilrettelegging.",
+      anchor_id: "topp",
+      background_style: "default",
+      layout_style: "editorial",
+      cta_label: "Ta kontakt",
+      cta_href: "mailto:post@opplev.no",
       content: {},
       settings: {},
       is_visible: true,
@@ -165,33 +167,44 @@ export const OPPLEV_SEED = {
       variant: "default",
       title: null,
       subtitle: null,
+      background_style: "default",
       content: {},
       settings: {},
       is_visible: true,
     },
     {
       module_type: "mission",
-      variant: "default",
+      variant: "simple",
+      eyebrow: "Vårt oppdrag",
       title: "Vårt oppdrag",
       subtitle: null,
+      anchor_id: "om",
+      background_style: "muted",
+      layout_style: "split",
       content: {},
       settings: {},
       is_visible: true,
     },
     {
       module_type: "services_grid",
-      variant: "default",
-      title: "Det vi tilrettelegger",
-      subtitle: "Aktiviteter og tilbud bygget for opplevelsen, ikke prestasjonen.",
+      variant: "cards",
+      eyebrow: "Det vi tilrettelegger",
+      title: "Aktiviteter og tilbud",
+      subtitle: "Bygget for opplevelsen, ikke prestasjonen.",
+      anchor_id: "aktiviteter",
+      background_style: "default",
+      layout_style: "grid",
       content: {},
-      settings: { anchor: "aktiviteter" },
+      settings: {},
       is_visible: true,
     },
     {
       module_type: "activities",
       variant: "default",
-      title: "På Kragerø Action Park",
-      subtitle: "Ekte mestring, ekte fart, ekte tilrettelegging.",
+      eyebrow: "På Kragerø Action Park",
+      title: "Ekte mestring, ekte fart",
+      subtitle: "Tilrettelagt motorsport — for alle som vil prøve.",
+      background_style: "default",
       content: {
         items: [
           { title: "Gokart for rullestolbrukere", description: "Alle skal i førersetet — bokstavelig talt." },
@@ -204,38 +217,50 @@ export const OPPLEV_SEED = {
     },
     {
       module_type: "partners",
-      variant: "default",
+      variant: "text_list",
+      eyebrow: "Samarbeid",
       title: "Sammen med",
       subtitle: "Vi jobber tett med kommuner, organisasjoner og bedrifter.",
+      anchor_id: "samarbeid",
+      background_style: "muted",
       content: {},
-      settings: { anchor: "samarbeid" },
+      settings: {},
       is_visible: true,
     },
     {
       module_type: "proof",
       variant: "default",
+      eyebrow: "Hvorfor det virker",
       title: "Hvorfor det virker",
       subtitle: null,
+      background_style: "default",
       content: {},
       settings: {},
       is_visible: true,
     },
     {
       module_type: "faq",
-      variant: "default",
+      variant: "accordion",
+      eyebrow: "Spørsmål og svar",
       title: "Vanlige spørsmål",
       subtitle: null,
+      background_style: "default",
       content: {},
       settings: {},
       is_visible: true,
     },
     {
       module_type: "contact_cta",
-      variant: "default",
+      variant: "soft",
+      eyebrow: "Ta kontakt",
       title: "Vil du samarbeide eller delta?",
       subtitle: "Vi tar gjerne en rolig prat. Ingen forpliktelser.",
+      anchor_id: "kontakt",
+      background_style: "muted",
+      cta_label: "Send oss en melding",
+      cta_href: "mailto:post@opplev.no",
       content: {},
-      settings: { anchor: "kontakt" },
+      settings: {},
       is_visible: true,
     },
   ],
