@@ -276,6 +276,12 @@ function StudioEditor() {
             enabled_modules: parseJson(recipe.enabled_modules, []),
             navigation: parseJson(recipe.navigation, []),
             footer: parseJson(recipe.footer, {}),
+            content_depth: recipe.content_depth,
+            storytelling_mode: recipe.storytelling_mode,
+            visual_proof_level: recipe.visual_proof_level,
+            rhythm_strategy: recipe.rhythm_strategy,
+            compression_policy: recipe.compression_policy,
+            creative_direction: recipe.creative_direction,
           },
         });
       }
