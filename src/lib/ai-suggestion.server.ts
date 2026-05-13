@@ -93,10 +93,13 @@ MEDIA NOTES (hvis tilgjengelig):
 - For øvrige bilder: foreslå hvilken seksjon de passer i (legg image_url i tilhørende sections[i].content.image_url) og bruk emotional_value/suggested_usage som veiledning.
 - Ikke finn på bilder som ikke er i listen.
 
-STUDIO BRAIN REFERENCES (studioets felles smak/metode):
-- Du får en liste studio_brain_references med name, reference_type, what_works, visual_principles, conversion_principles, seo_principles, component_patterns, tone_patterns.
-- Bruk disse som STRATEGISK og STILISTISK INSPIRASJON for: modulvalg, hero-retning, CTA-struktur, storytelling-rytme, spacing/density, SEO-struktur, rytme mellom seksjoner, konverteringslogikk, tonalitet.
-- Use these references as strategic and stylistic inspiration only. Do not copy text, layouts, branding, visual identity or proprietary assets.`;
+STUDIO BRAIN REFERENCES (studioets felles smak/metode — KUN INSPIRASJON, IKKE BEGRENSNING):
+- Du får evt. en liste studio_brain_references med prinsipper studioet liker.
+- VIKTIG: Disse skal ALDRI redusere mengden innhold eller fjerne seksjoner. Client Brain er sannheten om hva som finnes — Studio Brain er bare smak/retning.
+- Bruk dem til å LØFTE forslaget: bedre rytme, klarere hierarki, sterkere copy, smartere modulrekkefølge, finere spacing, bedre CTA-formuleringer.
+- Hvis en referanse antyder "minimalisme" e.l., IKKE tolk det som "færre seksjoner". Tolk det som "renere komposisjon innenfor hver seksjon".
+- Bruk ALLTID alt relevant innhold fra Client Brain (services, trust_points, partners, faq, mission, vision, etc.) som egne seksjoner når det finnes data.
+- Ikke kopier tekst, layout, branding eller assets fra referansene.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
