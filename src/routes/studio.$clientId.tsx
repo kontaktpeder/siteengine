@@ -213,6 +213,12 @@ function StudioEditor() {
     enabled_modules: asJson(r?.enabled_modules ?? []),
     navigation: asJson(r?.navigation ?? []),
     footer: asJson(r?.footer ?? {}),
+    content_depth: (r as { content_depth?: string } | null)?.content_depth ?? "balanced",
+    storytelling_mode: (r as { storytelling_mode?: string } | null)?.storytelling_mode ?? "editorial",
+    visual_proof_level: (r as { visual_proof_level?: string } | null)?.visual_proof_level ?? "medium",
+    rhythm_strategy: (r as { rhythm_strategy?: string } | null)?.rhythm_strategy ?? "varied",
+    compression_policy: (r as { compression_policy?: string } | null)?.compression_policy ?? "preserve_detail",
+    creative_direction: (r as { creative_direction?: string | null } | null)?.creative_direction ?? "",
   });
 
   if (!c) {
