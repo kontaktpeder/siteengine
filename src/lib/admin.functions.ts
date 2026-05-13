@@ -598,15 +598,18 @@ export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
       ...(data.brain_draft ?? {}),
     };
 
+    const studioRefs = await fetchRelevantStudioReferences(brainMerged);
+
     const suggestion = await generateAiSuggestion({
       client: client as Record<string, unknown> | null,
       brain: brainMerged,
       recipe: (recipes?.[0] as Record<string, unknown>) ?? null,
       sections,
       media_notes: (mediaNotes as unknown[]) ?? [],
+      studio_references: studioRefs as unknown as Record<string, unknown>[],
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return suggestion as any;
+    return { ...(suggestion as any), studio_references_used: studioRefs };
   });
 
 // ---------- Media notes (lightweight image metadata for AI context) ----------
