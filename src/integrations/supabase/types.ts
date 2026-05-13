@@ -514,7 +514,10 @@ export type Database = {
         Row: {
           client_id: string
           color_palette: Json
+          compression_policy: string
+          content_depth: string
           created_at: string
+          creative_direction: string | null
           design_direction: string | null
           enabled_modules: Json
           footer: Json
@@ -524,15 +527,21 @@ export type Database = {
           navigation: Json
           primary_intent: string | null
           recipe_type: string
+          rhythm_strategy: string
           site_type: string
+          storytelling_mode: string
           typography: Json
           updated_at: string
           variant_presets: Json
+          visual_proof_level: string
         }
         Insert: {
           client_id: string
           color_palette?: Json
+          compression_policy?: string
+          content_depth?: string
           created_at?: string
+          creative_direction?: string | null
           design_direction?: string | null
           enabled_modules?: Json
           footer?: Json
@@ -542,15 +551,21 @@ export type Database = {
           navigation?: Json
           primary_intent?: string | null
           recipe_type?: string
+          rhythm_strategy?: string
           site_type?: string
+          storytelling_mode?: string
           typography?: Json
           updated_at?: string
           variant_presets?: Json
+          visual_proof_level?: string
         }
         Update: {
           client_id?: string
           color_palette?: Json
+          compression_policy?: string
+          content_depth?: string
           created_at?: string
+          creative_direction?: string | null
           design_direction?: string | null
           enabled_modules?: Json
           footer?: Json
@@ -560,10 +575,13 @@ export type Database = {
           navigation?: Json
           primary_intent?: string | null
           recipe_type?: string
+          rhythm_strategy?: string
           site_type?: string
+          storytelling_mode?: string
           typography?: Json
           updated_at?: string
           variant_presets?: Json
+          visual_proof_level?: string
         }
         Relationships: [
           {

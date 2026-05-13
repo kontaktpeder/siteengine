@@ -25,6 +25,20 @@ const VALID_INTENTS = new Set([
   "inform",
   "collect_support",
 ]);
+const VALID_CONTENT_DEPTH = new Set(["lean", "balanced", "rich"]);
+const VALID_STORYTELLING = new Set([
+  "minimal",
+  "editorial",
+  "documentary",
+  "conversion",
+]);
+const VALID_VISUAL_PROOF = new Set(["low", "medium", "high"]);
+const VALID_RHYTHM = new Set(["calm", "varied", "high_contrast"]);
+const VALID_COMPRESSION = new Set([
+  "preserve_detail",
+  "simplify",
+  "aggressively_summarize",
+]);
 
 // JSON-like used in AI suggestion fields so the server-fn serializer accepts the shape.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +63,12 @@ export interface AiSuggestion {
     enabled_modules: string[];
     navigation: { label: string; href: string }[];
     footer: Record<string, JsonLike>;
+    content_depth: string;
+    storytelling_mode: string;
+    visual_proof_level: string;
+    rhythm_strategy: string;
+    compression_policy: string;
+    creative_direction: string;
   };
   home_page: {
     title: string;
@@ -119,7 +139,43 @@ STUDIO BRAIN REFERENCES (subtil stilistisk veiledning — IKKE fasit):
 - "Mer menneskelig" betyr bedre rytme, tydeligere fokus, sterkere historiefortelling, mer emosjonell klarhet — ikke mindre innhold.
 - Studio Brain skal raffinere, ikke redusere. Style, ikke sensurere. Strukturere, ikke erstatte identitet.
 - Hvis Studio Brain og Client Brain ser ut til å kollidere → Client Brain vinner. Alltid.
-- Ikke kopier tekst, layout, branding eller assets fra referansene.`;
+- Ikke kopier tekst, layout, branding eller assets fra referansene.
+
+SITE RECIPE — CREATIVE DIRECTION (styrer HVORDAN innholdet presenteres, ikke OM):
+Du får (og du skal selv foreslå) disse feltene i recipe:
+- content_depth: lean | balanced | rich
+- storytelling_mode: minimal | editorial | documentary | conversion
+- visual_proof_level: low | medium | high
+- rhythm_strategy: calm | varied | high_contrast
+- compression_policy: preserve_detail | simplify | aggressively_summarize
+- creative_direction: fritekst (HØYPRIORITERT instruks fra studioet — følg den nøye)
+
+Regler:
+- "Calm" betyr rolig HIERARKI, ikke tom side. "Tasteful" betyr bedre rytme, ikke svakere identitet. Minimalisme betyr ALDRI mindre innhold.
+- compression_policy=preserve_detail (default) → behold konkrete detaljer, navn, scener og sitater fra Client Brain ordrett der det gir mening. Ikke generaliser bort substans.
+- compression_policy=simplify → kortere copy, men samme antall meningsfulle seksjoner og samme substansielle punkter.
+- compression_policy=aggressively_summarize → kun for veldig korte landingssider; krever eksplisitt valg.
+- content_depth=rich → flere seksjoner, lengre body, flere cards/punkter, flere konkrete eksempler. Bruk all relevant Client Brain-data.
+- content_depth=balanced → standard moderne nettside.
+- content_depth=lean → strammere, men aldri på bekostning av flagship_story, services, trust_points, partners eller faq.
+- storytelling_mode=documentary → prioriter ekte scener, aktiviteter, mennesker, bilder og øyeblikk. Bruk representative_scene og media_notes aktivt. Skriv konkret, ikke abstrakt.
+- storytelling_mode=editorial → magasinaktig rytme med tydelige eyebrows, sitater, varierte layouter.
+- storytelling_mode=conversion → mer direkte CTA-rytme, men behold trust og substans.
+- storytelling_mode=minimal → strammere copy, men samme antall meningsfulle seksjoner.
+- visual_proof_level=high → bruk media_notes aktivt; spre bilder utover siden; foreslå image_url på flere seksjoner enn bare hero.
+- visual_proof_level=medium → bilde i hero + 1-2 andre relevante seksjoner.
+- visual_proof_level=low → tekst-tungt; bilde kun der det virkelig løfter.
+- rhythm_strategy=varied → varier background_style (default/muted/mint/dark/image), layout_style og seksjonstyper. ALDRI white/card/white/card hele veien.
+- rhythm_strategy=calm → ensartet, rolig rytme — men fortsatt full innholdsdybde.
+- rhythm_strategy=high_contrast → tydelige skifter mellom mørke/lyse/bilde-seksjoner for dramatikk.
+- creative_direction (fritekst): les denne som DIREKTE INSTRUKS fra studioet. Den overstyrer Studio Brain-referanser hvis de motsier hverandre. Den overstyrer ALDRI Client Brain-substans.
+
+Når du velger defaults selv (hvis recipe-feltene er tomme):
+- nonprofit med ekte aktiviteter → rich / documentary / high / varied / preserve_detail
+- lead_generation/kurs → balanced / conversion / medium / varied / preserve_detail
+- food_brand → balanced / editorial / high / varied / preserve_detail
+- portfolio → balanced / editorial / high / varied / preserve_detail
+- ellers → balanced / editorial / medium / varied / preserve_detail`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
@@ -183,6 +239,11 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
 
   const siteType = clampString(recipeIn.site_type, "nonprofit");
   const primaryIntent = clampString(recipeIn.primary_intent, "build_trust");
+  const cd = clampString(recipeIn.content_depth, "balanced");
+  const sm = clampString(recipeIn.storytelling_mode, "editorial");
+  const vp = clampString(recipeIn.visual_proof_level, "medium");
+  const rs = clampString(recipeIn.rhythm_strategy, "varied");
+  const cp = clampString(recipeIn.compression_policy, "preserve_detail");
 
   const clientIn = asObj(p.client);
   const themeIn = asObj(clientIn.theme);
@@ -213,6 +274,12 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
         (n) => n && typeof n.label === "string" && typeof n.href === "string",
       ),
       footer: asObj(recipeIn.footer),
+      content_depth: VALID_CONTENT_DEPTH.has(cd) ? cd : "balanced",
+      storytelling_mode: VALID_STORYTELLING.has(sm) ? sm : "editorial",
+      visual_proof_level: VALID_VISUAL_PROOF.has(vp) ? vp : "medium",
+      rhythm_strategy: VALID_RHYTHM.has(rs) ? rs : "varied",
+      compression_policy: VALID_COMPRESSION.has(cp) ? cp : "preserve_detail",
+      creative_direction: clampString(recipeIn.creative_direction, ""),
     },
     home_page: {
       title: clampString(homeIn.title, "Forsiden"),
@@ -244,6 +311,12 @@ function fallbackSuggestion(brain: Record<string, unknown>): AiSuggestion {
       enabled_modules: heur.enabled_modules,
       navigation: heur.navigation,
       footer: heur.footer as Record<string, unknown>,
+      content_depth: "balanced",
+      storytelling_mode: "editorial",
+      visual_proof_level: "medium",
+      rhythm_strategy: "varied",
+      compression_policy: "preserve_detail",
+      creative_direction: "",
     },
     home_page: {
       title: "Forsiden",
@@ -297,7 +370,7 @@ export async function generateAiSuggestion(input: {
     expected_format: {
       client: { description: "", theme: { primaryColor: "", backgroundColor: "", surfaceColor: "", textColor: "", radius: "", fontStyle: "" } },
       brain: { site_type: "", primary_goal: "", secondary_goal: "", audience: [], brand_keywords: [], tone_keywords: [], short_description: "", long_description: "", mission: "", vision: "", problem_statement: "", solution_statement: "", trust_points: [], services: [], partners: [], faq: [], cta_primary_label: "", cta_primary_href: "", cta_secondary_label: "", cta_secondary_href: "", flagship_story: "", emotional_trigger: "", anti_brand: "", memorable_takeaway: "", representative_scene: "", desired_feelings: "" },
-      recipe: { recipe_type: "", site_type: "", primary_intent: "", design_direction: "", color_palette: {}, typography: {}, layout_preferences: {}, module_strategy: {}, variant_presets: {}, enabled_modules: [], navigation: [], footer: {} },
+      recipe: { recipe_type: "", site_type: "", primary_intent: "", design_direction: "", color_palette: {}, typography: {}, layout_preferences: {}, module_strategy: {}, variant_presets: {}, enabled_modules: [], navigation: [], footer: {}, content_depth: "balanced", storytelling_mode: "editorial", visual_proof_level: "medium", rhythm_strategy: "varied", compression_policy: "preserve_detail", creative_direction: "" },
       home_page: { title: "", meta_title: "", meta_description: "", status: "published" },
       sections: [{ module_type: "", variant: "", sort_order: 0, is_visible: true, anchor_id: "", eyebrow: "", title: "", subtitle: "", body: "", cta_label: "", cta_href: "", background_style: "", layout_style: "", content: {}, settings: {} }],
     },

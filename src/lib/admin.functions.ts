@@ -231,6 +231,12 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       enabled_modules?: unknown;
       navigation?: unknown;
       footer?: unknown;
+      content_depth?: string | null;
+      storytelling_mode?: string | null;
+      visual_proof_level?: string | null;
+      rhythm_strategy?: string | null;
+      compression_policy?: string | null;
+      creative_direction?: string | null;
     }) => input,
   )
   .handler(async ({ data }) => {
@@ -258,6 +264,12 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       enabled_modules: (data.enabled_modules ?? []) as never,
       navigation: (data.navigation ?? []) as never,
       footer: (data.footer ?? {}) as never,
+      content_depth: data.content_depth ?? "balanced",
+      storytelling_mode: data.storytelling_mode ?? "editorial",
+      visual_proof_level: data.visual_proof_level ?? "medium",
+      rhythm_strategy: data.rhythm_strategy ?? "varied",
+      compression_policy: data.compression_policy ?? "preserve_detail",
+      creative_direction: data.creative_direction ?? null,
     };
 
     if (existing && existing.length) {
@@ -774,6 +786,12 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       enabled_modules: (r.enabled_modules ?? []) as never,
       navigation: (r.navigation ?? []) as never,
       footer: (r.footer ?? {}) as never,
+      content_depth: r.content_depth ?? "balanced",
+      storytelling_mode: r.storytelling_mode ?? "editorial",
+      visual_proof_level: r.visual_proof_level ?? "medium",
+      rhythm_strategy: r.rhythm_strategy ?? "varied",
+      compression_policy: r.compression_policy ?? "preserve_detail",
+      creative_direction: r.creative_direction ?? null,
     };
     if (existingRecipe && existingRecipe.length) {
       const { error } = await supabaseAdmin

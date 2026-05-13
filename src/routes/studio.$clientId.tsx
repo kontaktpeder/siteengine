@@ -213,6 +213,12 @@ function StudioEditor() {
     enabled_modules: asJson(r?.enabled_modules ?? []),
     navigation: asJson(r?.navigation ?? []),
     footer: asJson(r?.footer ?? {}),
+    content_depth: (r as { content_depth?: string } | null)?.content_depth ?? "balanced",
+    storytelling_mode: (r as { storytelling_mode?: string } | null)?.storytelling_mode ?? "editorial",
+    visual_proof_level: (r as { visual_proof_level?: string } | null)?.visual_proof_level ?? "medium",
+    rhythm_strategy: (r as { rhythm_strategy?: string } | null)?.rhythm_strategy ?? "varied",
+    compression_policy: (r as { compression_policy?: string } | null)?.compression_policy ?? "preserve_detail",
+    creative_direction: (r as { creative_direction?: string | null } | null)?.creative_direction ?? "",
   });
 
   if (!c) {
@@ -270,6 +276,12 @@ function StudioEditor() {
             enabled_modules: parseJson(recipe.enabled_modules, []),
             navigation: parseJson(recipe.navigation, []),
             footer: parseJson(recipe.footer, {}),
+            content_depth: recipe.content_depth,
+            storytelling_mode: recipe.storytelling_mode,
+            visual_proof_level: recipe.visual_proof_level,
+            rhythm_strategy: recipe.rhythm_strategy,
+            compression_policy: recipe.compression_policy,
+            creative_direction: recipe.creative_direction,
           },
         });
       }
@@ -490,7 +502,18 @@ function StudioEditor() {
                   <div><span className="text-muted-foreground">Site type:</span> {suggestion.recipe.site_type}</div>
                   <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.recipe.primary_intent}</div>
                   <div><span className="text-muted-foreground">Design direction:</span> {suggestion.recipe.design_direction}</div>
+                  <div><span className="text-muted-foreground">Content depth:</span> {(suggestion.recipe as { content_depth?: string }).content_depth ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Storytelling mode:</span> {(suggestion.recipe as { storytelling_mode?: string }).storytelling_mode ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Visual proof:</span> {(suggestion.recipe as { visual_proof_level?: string }).visual_proof_level ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Rhythm:</span> {(suggestion.recipe as { rhythm_strategy?: string }).rhythm_strategy ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Compression:</span> {(suggestion.recipe as { compression_policy?: string }).compression_policy ?? "—"}</div>
                 </div>
+                {(suggestion.recipe as { creative_direction?: string }).creative_direction ? (
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <div className="text-xs uppercase text-muted-foreground">Creative direction</div>
+                    <div className="mt-1 whitespace-pre-wrap text-xs">{(suggestion.recipe as { creative_direction?: string }).creative_direction}</div>
+                  </div>
+                ) : null}
                 {suggestion.warnings?.length ? (
                   <div className="rounded-md bg-amber-100/40 p-2 text-xs text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
                     {suggestion.warnings.join(" · ")}
@@ -545,8 +568,6 @@ function StudioEditor() {
               </div>
             ) : null}
           </Section>
-
-
           <Section title="Kjerne">
             <div className="grid gap-4">
               <Field label="Site type">
@@ -680,6 +701,56 @@ function StudioEditor() {
               </Field>
               <Field label="Design direction" hint="f.eks. fiken_calm_mint, brutalist_studio">
                 <input className={inputCls} value={recipe.design_direction} onChange={(e) => setRecipe({ ...recipe, design_direction: e.target.value })} />
+              </Field>
+            </div>
+          </Section>
+
+          <Section title="Creative direction">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Disse feltene styrer HVORDAN AI presenterer Client Brain — ikke OM
+              ting tas med. Minimalisme her betyr aldri mindre innhold.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Content depth" hint="Hvor rik siden skal være">
+                <select className={inputCls} value={recipe.content_depth} onChange={(e) => setRecipe({ ...recipe, content_depth: e.target.value })}>
+                  <option value="lean">lean</option>
+                  <option value="balanced">balanced</option>
+                  <option value="rich">rich</option>
+                </select>
+              </Field>
+              <Field label="Storytelling mode" hint="Hvordan historien fortelles">
+                <select className={inputCls} value={recipe.storytelling_mode} onChange={(e) => setRecipe({ ...recipe, storytelling_mode: e.target.value })}>
+                  <option value="minimal">minimal</option>
+                  <option value="editorial">editorial</option>
+                  <option value="documentary">documentary</option>
+                  <option value="conversion">conversion</option>
+                </select>
+              </Field>
+              <Field label="Visual proof level" hint="Hvor mye bildebevis siden skal vise">
+                <select className={inputCls} value={recipe.visual_proof_level} onChange={(e) => setRecipe({ ...recipe, visual_proof_level: e.target.value })}>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </Field>
+              <Field label="Rhythm strategy" hint="Variasjon mellom seksjoner">
+                <select className={inputCls} value={recipe.rhythm_strategy} onChange={(e) => setRecipe({ ...recipe, rhythm_strategy: e.target.value })}>
+                  <option value="calm">calm</option>
+                  <option value="varied">varied</option>
+                  <option value="high_contrast">high_contrast</option>
+                </select>
+              </Field>
+              <Field label="Compression policy" hint="Hvor mye Client Brain-detaljer skal bevares">
+                <select className={inputCls} value={recipe.compression_policy} onChange={(e) => setRecipe({ ...recipe, compression_policy: e.target.value })}>
+                  <option value="preserve_detail">preserve_detail</option>
+                  <option value="simplify">simplify</option>
+                  <option value="aggressively_summarize">aggressively_summarize</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-4">
+              <Field label="Creative direction (fritekst — høyprioritert AI-instruks)" hint="Skriv som om du brifer en designer. Overstyrer Studio Brain-referanser, men aldri Client Brain-substans.">
+                <textarea className={inputCls} rows={6} value={recipe.creative_direction} onChange={(e) => setRecipe({ ...recipe, creative_direction: e.target.value })} placeholder="F.eks. 'Dokumentarisk og varm. Bruk bilder fra aktivitetene aktivt. Ikke corporate. Behold konkrete scener fra brain-en. Vekt på mennesker og øyeblikk.'" />
               </Field>
             </div>
           </Section>
