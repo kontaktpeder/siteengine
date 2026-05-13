@@ -596,6 +596,8 @@ function StudioEditor() {
               </Field>
             </div>
           </Section>
+
+          <Section title="Lister (JSON)">
             <div className="grid gap-4">
               <JsonField label="Audience" value={brain.audience} onChange={(v) => setBrain({ ...brain, audience: v })} />
               <JsonField label="Brand keywords" value={brain.brand_keywords} onChange={(v) => setBrain({ ...brain, brand_keywords: v })} />
