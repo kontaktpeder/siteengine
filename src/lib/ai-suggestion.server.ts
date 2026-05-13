@@ -77,7 +77,21 @@ REGLER:
 - layout_style: centered, split, grid, editorial.
 - Ikke ta med partners-modul hvis det ikke finnes partnere i Brain. Ikke ta med faq-modul hvis det ikke finnes spørsmål.
 - Theme: bruk oklch(...) for farger.
-- Strukturen på sections skal følge en gjennomtenkt rekkefølge for valgt site_type/primary_intent.`;
+- Strukturen på sections skal følge en gjennomtenkt rekkefølge for valgt site_type/primary_intent.
+
+MENNESKELIGE IDENTITETSFELTER (les aktivt og la dem styre forslaget):
+- flagship_story: Hvis satt — bruk denne historien som mulig hero-retning og prioriter en storytelling-/mission-seksjon tidlig (rett etter hero).
+- representative_scene: Hvis satt — la denne scenen prege hero-copy og imagery-retning (referer til den i sections.content/settings.imagery_direction).
+- emotional_trigger: Hvis satt — vev denne følelsen inn i mission/proof/contact_cta-copy.
+- anti_brand: Hvis satt — unngå denne tonen/stilen. F.eks. "ikke corporate" → unngå stiv/offentlig tone, hold copy varm og menneskelig.
+- desired_feelings: Hvis satt — la den styre tone, copy-rytme og visuell tetthet. F.eks. "trygg, rolig, sett" → mer luft, mykere copy, roligere CTA-er.
+- memorable_takeaway: Hvis satt — sørg for at denne ene tingen kommer tydelig frem i hero ELLER en dedikert seksjon.
+
+MEDIA NOTES (hvis tilgjengelig):
+- Du får en liste media_notes med image_url, title, description, emotional_value, suggested_usage, is_hero_candidate.
+- Hvis et bilde er is_hero_candidate=true, foreslå det som hero-bilde via sections[hero].content.image_url og settings.image_alt.
+- For øvrige bilder: foreslå hvilken seksjon de passer i (legg image_url i tilhørende sections[i].content.image_url) og bruk emotional_value/suggested_usage som veiledning.
+- Ikke finn på bilder som ikke er i listen.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
