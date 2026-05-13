@@ -168,6 +168,7 @@ function StudioEditor() {
     theme: asJson(c?.theme ?? {}),
   });
 
+  const bExt = (b ?? {}) as Record<string, unknown>;
   const [brain, setBrain] = useState({
     site_type: b?.site_type ?? "landing_page",
     primary_goal: b?.primary_goal ?? "",
@@ -190,6 +191,12 @@ function StudioEditor() {
     services: asJson(b?.services),
     partners: asJson(b?.partners),
     faq: asJson(b?.faq),
+    flagship_story: (bExt.flagship_story as string) ?? "",
+    emotional_trigger: (bExt.emotional_trigger as string) ?? "",
+    anti_brand: (bExt.anti_brand as string) ?? "",
+    memorable_takeaway: (bExt.memorable_takeaway as string) ?? "",
+    representative_scene: (bExt.representative_scene as string) ?? "",
+    desired_feelings: (bExt.desired_feelings as string) ?? "",
   });
 
   const [recipe, setRecipe] = useState({
