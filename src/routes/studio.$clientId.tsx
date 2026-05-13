@@ -58,24 +58,14 @@ function StudioEditor() {
 
   const c = data.client;
   const b = data.brain;
-  if (!c) {
-    return (
-      <div className="mx-auto max-w-3xl p-10">
-        <p>Klient ikke funnet.</p>
-        <Link to="/studio" className="underline">
-          Tilbake
-        </Link>
-      </div>
-    );
-  }
 
   const [client, setClient] = useState({
-    name: c.name,
-    slug: c.slug,
-    status: c.status,
-    email: c.email ?? "",
-    phone: c.phone ?? "",
-    primary_domain: c.primary_domain ?? "",
+    name: c?.name ?? "",
+    slug: c?.slug ?? "",
+    status: c?.status ?? "draft",
+    email: c?.email ?? "",
+    phone: c?.phone ?? "",
+    primary_domain: c?.primary_domain ?? "",
   });
 
   const [brain, setBrain] = useState({
@@ -100,6 +90,18 @@ function StudioEditor() {
     partners: asJson(b?.partners),
     faq: asJson(b?.faq),
   });
+
+  if (!c) {
+    return (
+      <div className="mx-auto max-w-3xl p-10">
+        <p>Klient ikke funnet.</p>
+        <Link to="/studio" className="underline">
+          Tilbake
+        </Link>
+      </div>
+    );
+  }
+
 
   async function handleSave() {
     setBusy(true);
