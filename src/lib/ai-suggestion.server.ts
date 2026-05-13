@@ -26,25 +26,29 @@ const VALID_INTENTS = new Set([
   "collect_support",
 ]);
 
+// JSON-like used in AI suggestion fields so the server-fn serializer accepts the shape.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsonLike = any;
+
 export interface AiSuggestion {
   client: {
     description?: string | null;
     theme: ThemeTokens;
   };
-  brain: Record<string, unknown>;
+  brain: Record<string, JsonLike>;
   recipe: {
     recipe_type: string;
     site_type: string;
     primary_intent: string;
     design_direction: string;
-    color_palette: Record<string, unknown>;
-    typography: Record<string, unknown>;
-    layout_preferences: Record<string, unknown>;
-    module_strategy: Record<string, unknown>;
+    color_palette: Record<string, JsonLike>;
+    typography: Record<string, JsonLike>;
+    layout_preferences: Record<string, JsonLike>;
+    module_strategy: Record<string, JsonLike>;
     variant_presets: Record<string, string>;
     enabled_modules: string[];
     navigation: { label: string; href: string }[];
-    footer: Record<string, unknown>;
+    footer: Record<string, JsonLike>;
   };
   home_page: {
     title: string;
