@@ -91,7 +91,12 @@ MEDIA NOTES (hvis tilgjengelig):
 - Du får en liste media_notes med image_url, title, description, emotional_value, suggested_usage, is_hero_candidate.
 - Hvis et bilde er is_hero_candidate=true, foreslå det som hero-bilde via sections[hero].content.image_url og settings.image_alt.
 - For øvrige bilder: foreslå hvilken seksjon de passer i (legg image_url i tilhørende sections[i].content.image_url) og bruk emotional_value/suggested_usage som veiledning.
-- Ikke finn på bilder som ikke er i listen.`;
+- Ikke finn på bilder som ikke er i listen.
+
+STUDIO BRAIN REFERENCES (studioets felles smak/metode):
+- Du får en liste studio_brain_references med name, reference_type, what_works, visual_principles, conversion_principles, seo_principles, component_patterns, tone_patterns.
+- Bruk disse som STRATEGISK og STILISTISK INSPIRASJON for: modulvalg, hero-retning, CTA-struktur, storytelling-rytme, spacing/density, SEO-struktur, rytme mellom seksjoner, konverteringslogikk, tonalitet.
+- Use these references as strategic and stylistic inspiration only. Do not copy text, layouts, branding, visual identity or proprietary assets.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
