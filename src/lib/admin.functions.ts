@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { PageSection } from "./site-types";
 import { OPPLEV_SEED } from "./seed-opplev.server";
 
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
