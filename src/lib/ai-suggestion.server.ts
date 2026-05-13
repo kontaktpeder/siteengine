@@ -239,6 +239,11 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
 
   const siteType = clampString(recipeIn.site_type, "nonprofit");
   const primaryIntent = clampString(recipeIn.primary_intent, "build_trust");
+  const cd = clampString(recipeIn.content_depth, "balanced");
+  const sm = clampString(recipeIn.storytelling_mode, "editorial");
+  const vp = clampString(recipeIn.visual_proof_level, "medium");
+  const rs = clampString(recipeIn.rhythm_strategy, "varied");
+  const cp = clampString(recipeIn.compression_policy, "preserve_detail");
 
   const clientIn = asObj(p.client);
   const themeIn = asObj(clientIn.theme);
