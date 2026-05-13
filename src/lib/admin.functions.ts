@@ -611,17 +611,29 @@ export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
 
 // ---------- Media notes (lightweight image metadata for AI context) ----------
 
+export interface MediaNote {
+  id: string;
+  client_id: string;
+  image_url: string;
+  title: string | null;
+  description: string | null;
+  emotional_value: string | null;
+  suggested_usage: string | null;
+  is_hero_candidate: boolean;
+  created_at: string;
+}
+
 export const listMediaNotes = createServerFn({ method: "GET" })
   .inputValidator((input: { client_id: string }) => input)
-  .handler(async ({ data }) => {
-    if (!hasStudioAdminAccess()) return { notes: [] as Record<string, unknown>[] };
+  .handler(async ({ data }): Promise<{ notes: MediaNote[] }> => {
+    if (!hasStudioAdminAccess()) return { notes: [] };
     const { data: rows, error } = await supabaseAdmin
       .from("media_notes" as never)
       .select("*")
       .eq("client_id", data.client_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return { notes: (rows as Record<string, unknown>[]) ?? [] };
+    return { notes: ((rows as unknown) as MediaNote[]) ?? [] };
   });
 
 export const upsertMediaNote = createServerFn({ method: "POST" })
