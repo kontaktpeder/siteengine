@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { PageSection } from "./site-types";
 import { OPPLEV_SEED } from "./seed-opplev.server";
+import { generateAiSuggestion, type AiSuggestion } from "./ai-suggestion.server";
 
 const STUDIO_ENV_ERROR =
   "Studio admin er ikke tilgjengelig i dette miljøet fordi SUPABASE_SERVICE_ROLE_KEY mangler.";
