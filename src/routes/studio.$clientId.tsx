@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  applyBrainSuggestion,
+  applyAiSuggestion,
+  generateAiBrainSuggestion,
   getClientBundle,
   saveHomePageSections,
   upsertBrain,
@@ -9,11 +10,10 @@ import {
   upsertRecipe,
 } from "@/lib/admin.functions";
 import {
-  suggestFromBrain,
   SUPPORTED_MODULE_TYPES,
-  type BrainSuggestionPreview,
   type BrainSuggestionSection,
 } from "@/lib/suggest-from-brain";
+import type { AiSuggestion } from "@/lib/ai-suggestion.server";
 import type {
   Client,
   ClientBrain,
