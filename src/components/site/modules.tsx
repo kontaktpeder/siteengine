@@ -469,7 +469,7 @@ function PartnersModule({ section, brain }: ModuleProps) {
 /* ---------- PROOF ---------- */
 
 function ProofModule({ section, brain }: ModuleProps) {
-  const items = asArray<AudienceItem>(brain?.audience);
+  const items = normalizeAudience(brain?.audience);
   if (!items.length && !brain?.long_description) return null;
   const dark = isDarkBg(section.background_style);
   return (
@@ -497,7 +497,7 @@ function ProofModule({ section, brain }: ModuleProps) {
 /* ---------- FAQ ---------- */
 
 function FaqModule({ section, brain }: ModuleProps) {
-  const items = asArray<FaqItem>(brain?.faq);
+  const items = normalizeFaq(brain?.faq);
   if (!items.length) return null;
   const variant = section.variant || "accordion";
   const dark = isDarkBg(section.background_style);
