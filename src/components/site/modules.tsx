@@ -248,9 +248,20 @@ function HeroModule({ section, brain }: ModuleProps) {
             </div>
           )}
         </div>
-        {isSplit ? (
-          <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
-        ) : null}
+        {isSplit ? (() => {
+          const content = (section.content ?? {}) as { image_url?: string };
+          const settings = (section.settings ?? {}) as { image_alt?: string };
+          const imageUrl = content.image_url || section.image_url || null;
+          return imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={settings.image_alt ?? section.title ?? ""}
+              className="aspect-[4/5] w-full rounded-3xl object-cover"
+            />
+          ) : (
+            <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
+          );
+        })() : null}
       </div>
     </Container>
   );
