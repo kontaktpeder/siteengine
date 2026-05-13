@@ -552,7 +552,50 @@ function StudioEditor() {
             </div>
           </Section>
 
-          <Section title="Lister (JSON)">
+          <Section title="Identitet — menneskelig kontekst for AI">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Disse feltene gir AI en mer menneskelig forståelse av hvem dere er.
+              Skriv som du forteller en venn — ikke salg, ikke buzzwords.
+            </p>
+            <div className="grid gap-4">
+              <Field
+                label="Flagship story"
+                hint="Den viktigste historien eller opplevelsen virksomheten handler om."
+              >
+                <textarea rows={4} className={inputCls} value={brain.flagship_story} onChange={(e) => setBrain({ ...brain, flagship_story: e.target.value })} />
+              </Field>
+              <Field
+                label="Representativ scene"
+                hint="Beskriv en ekte scene eller situasjon som representerer virksomheten."
+              >
+                <textarea rows={4} className={inputCls} value={brain.representative_scene} onChange={(e) => setBrain({ ...brain, representative_scene: e.target.value })} />
+              </Field>
+              <Field
+                label="Emosjonell trigger"
+                hint="Hva reagerer folk emosjonelt på når de møter dere?"
+              >
+                <textarea rows={3} className={inputCls} value={brain.emotional_trigger} onChange={(e) => setBrain({ ...brain, emotional_trigger: e.target.value })} />
+              </Field>
+              <Field
+                label="Ønskede følelser"
+                hint="Hvordan skal folk føle seg etter å ha besøkt siden? F.eks. trygg, rolig, sett."
+              >
+                <textarea rows={3} className={inputCls} value={brain.desired_feelings} onChange={(e) => setBrain({ ...brain, desired_feelings: e.target.value })} />
+              </Field>
+              <Field
+                label="Memorable takeaway"
+                hint="Den ene tingen folk skal huske etter å ha vært på siden."
+              >
+                <textarea rows={3} className={inputCls} value={brain.memorable_takeaway} onChange={(e) => setBrain({ ...brain, memorable_takeaway: e.target.value })} />
+              </Field>
+              <Field
+                label="Anti-brand"
+                hint="Hva ønsker dere IKKE å fremstå som? F.eks. «ikke corporate», «ikke for hipt»."
+              >
+                <textarea rows={3} className={inputCls} value={brain.anti_brand} onChange={(e) => setBrain({ ...brain, anti_brand: e.target.value })} />
+              </Field>
+            </div>
+          </Section>
             <div className="grid gap-4">
               <JsonField label="Audience" value={brain.audience} onChange={(v) => setBrain({ ...brain, audience: v })} />
               <JsonField label="Brand keywords" value={brain.brand_keywords} onChange={(v) => setBrain({ ...brain, brand_keywords: v })} />
