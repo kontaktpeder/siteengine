@@ -25,6 +25,20 @@ const VALID_INTENTS = new Set([
   "inform",
   "collect_support",
 ]);
+const VALID_CONTENT_DEPTH = new Set(["lean", "balanced", "rich"]);
+const VALID_STORYTELLING = new Set([
+  "minimal",
+  "editorial",
+  "documentary",
+  "conversion",
+]);
+const VALID_VISUAL_PROOF = new Set(["low", "medium", "high"]);
+const VALID_RHYTHM = new Set(["calm", "varied", "high_contrast"]);
+const VALID_COMPRESSION = new Set([
+  "preserve_detail",
+  "simplify",
+  "aggressively_summarize",
+]);
 
 // JSON-like used in AI suggestion fields so the server-fn serializer accepts the shape.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
