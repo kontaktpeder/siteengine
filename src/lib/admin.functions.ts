@@ -7,7 +7,10 @@ const STUDIO_ENV_ERROR =
   "Studio admin er ikke tilgjengelig i dette miljøet fordi SUPABASE_SERVICE_ROLE_KEY mangler.";
 
 function hasStudioAdminAccess() {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(
+    (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) &&
+      (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.STUDIO_SUPABASE_SERVICE_ROLE_KEY),
+  );
 }
 
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
