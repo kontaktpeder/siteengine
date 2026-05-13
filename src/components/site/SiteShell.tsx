@@ -8,8 +8,8 @@ interface NavItem {
 
 export function SiteShell({ data }: { data: SiteData }) {
   const recipe = data.recipe;
-  const nav = (recipe?.navigation ?? []) as NavItem[];
-  const footer = (recipe?.footer ?? {}) as { tagline?: string; email?: string };
+  const nav = (Array.isArray(recipe?.navigation) ? recipe?.navigation : []) as unknown as NavItem[];
+  const footer = (recipe?.footer ?? {}) as unknown as { tagline?: string; email?: string };
   const brain = data.brain;
 
   return (
