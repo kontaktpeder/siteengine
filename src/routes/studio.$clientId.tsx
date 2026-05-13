@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   applyAiSuggestion,
+  deleteMediaNote,
   generateAiBrainSuggestion,
   getClientBundle,
+  listMediaNotes,
   saveHomePageSections,
   upsertBrain,
   upsertClient,
+  upsertMediaNote,
   upsertRecipe,
+  type MediaNote,
 } from "@/lib/admin.functions";
 import {
   SUPPORTED_MODULE_TYPES,
