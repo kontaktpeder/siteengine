@@ -17,32 +17,41 @@ export type ModuleType =
   | "faq"
   | "contact_cta";
 
+export interface ThemeTokens {
+  primaryColor?: string;
+  backgroundColor?: string;
+  surfaceColor?: string;
+  textColor?: string;
+  mutedColor?: string;
+  borderColor?: string;
+  radius?: string;
+  fontStyle?: "serif" | "sans" | "mixed";
+}
+
+export type BackgroundStyle = "default" | "muted" | "mint" | "dark" | "image";
+export type LayoutStyle = "centered" | "split" | "grid" | "editorial";
+
 export interface AudienceItem {
   label: string;
   description?: string;
 }
-
 export interface TrustPoint {
   label: string;
   description?: string;
 }
-
 export interface ServiceItem {
   title: string;
   description?: string;
   icon?: string;
 }
-
 export interface PartnerItem {
   name: string;
   url?: string;
 }
-
 export interface FaqItem {
   question: string;
   answer: string;
 }
-
 export interface ActivityItem {
   title: string;
   description?: string;
