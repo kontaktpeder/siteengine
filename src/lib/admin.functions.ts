@@ -188,7 +188,13 @@ export const upsertBrain = createServerFn({ method: "POST" })
       cta_secondary_href: (data.cta_secondary_href as string) ?? null,
       raw_notes: (data.raw_notes as string) ?? null,
       internal_notes: (data.internal_notes as string) ?? null,
-    };
+      flagship_story: (data.flagship_story as string) ?? null,
+      emotional_trigger: (data.emotional_trigger as string) ?? null,
+      anti_brand: (data.anti_brand as string) ?? null,
+      memorable_takeaway: (data.memorable_takeaway as string) ?? null,
+      representative_scene: (data.representative_scene as string) ?? null,
+      desired_feelings: (data.desired_feelings as string) ?? null,
+    } as never;
 
     if (existing && existing.length) {
       const { data: row, error } = await supabaseAdmin
@@ -582,6 +588,11 @@ export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
       sections = sec ?? [];
     }
 
+    const { data: mediaNotes } = await supabaseAdmin
+      .from("media_notes" as never)
+      .select("*")
+      .eq("client_id", data.client_id);
+
     const brainMerged = {
       ...((brains?.[0] as Record<string, unknown>) ?? {}),
       ...(data.brain_draft ?? {}),
@@ -592,9 +603,92 @@ export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
       brain: brainMerged,
       recipe: (recipes?.[0] as Record<string, unknown>) ?? null,
       sections,
+      media_notes: (mediaNotes as unknown[]) ?? [],
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return suggestion as any;
+  });
+
+// ---------- Media notes (lightweight image metadata for AI context) ----------
+
+export interface MediaNote {
+  id: string;
+  client_id: string;
+  image_url: string;
+  title: string | null;
+  description: string | null;
+  emotional_value: string | null;
+  suggested_usage: string | null;
+  is_hero_candidate: boolean;
+  created_at: string;
+}
+
+export const listMediaNotes = createServerFn({ method: "GET" })
+  .inputValidator((input: { client_id: string }) => input)
+  .handler(async ({ data }): Promise<{ notes: MediaNote[] }> => {
+    if (!hasStudioAdminAccess()) return { notes: [] };
+    const { data: rows, error } = await supabaseAdmin
+      .from("media_notes" as never)
+      .select("*")
+      .eq("client_id", data.client_id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return { notes: ((rows as unknown) as MediaNote[]) ?? [] };
+  });
+
+export const upsertMediaNote = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: {
+      id?: string;
+      client_id: string;
+      image_url: string;
+      title?: string | null;
+      description?: string | null;
+      emotional_value?: string | null;
+      suggested_usage?: string | null;
+      is_hero_candidate?: boolean;
+    }) => input,
+  )
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const payload = {
+      client_id: data.client_id,
+      image_url: data.image_url,
+      title: data.title ?? null,
+      description: data.description ?? null,
+      emotional_value: data.emotional_value ?? null,
+      suggested_usage: data.suggested_usage ?? null,
+      is_hero_candidate: data.is_hero_candidate ?? false,
+    };
+    if (data.id) {
+      const { data: row, error } = await supabaseAdmin
+        .from("media_notes" as never)
+        .update(payload as never)
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await supabaseAdmin
+      .from("media_notes" as never)
+      .insert(payload as never)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteMediaNote = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const { error } = await supabaseAdmin
+      .from("media_notes" as never)
+      .delete()
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const applyAiSuggestion = createServerFn({ method: "POST" })
@@ -627,6 +721,8 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       "tone_keywords", "short_description", "long_description", "mission", "vision",
       "problem_statement", "solution_statement", "trust_points", "services", "partners",
       "faq", "cta_primary_label", "cta_primary_href", "cta_secondary_label", "cta_secondary_href",
+      "flagship_story", "emotional_trigger", "anti_brand", "memorable_takeaway",
+      "representative_scene", "desired_feelings",
     ];
     const brainPatch: Record<string, unknown> = { client_id };
     for (const k of brainAllowed) {

@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       client_brains: {
         Row: {
+          anti_brand: string | null
           audience: Json
           brand_keywords: Json
           client_id: string
@@ -24,15 +25,20 @@ export type Database = {
           cta_primary_label: string | null
           cta_secondary_href: string | null
           cta_secondary_label: string | null
+          desired_feelings: string | null
+          emotional_trigger: string | null
           faq: Json
+          flagship_story: string | null
           id: string
           internal_notes: string | null
           long_description: string | null
+          memorable_takeaway: string | null
           mission: string | null
           partners: Json
           primary_goal: string | null
           problem_statement: string | null
           raw_notes: string | null
+          representative_scene: string | null
           secondary_goal: string | null
           services: Json
           short_description: string | null
@@ -44,6 +50,7 @@ export type Database = {
           vision: string | null
         }
         Insert: {
+          anti_brand?: string | null
           audience?: Json
           brand_keywords?: Json
           client_id: string
@@ -52,15 +59,20 @@ export type Database = {
           cta_primary_label?: string | null
           cta_secondary_href?: string | null
           cta_secondary_label?: string | null
+          desired_feelings?: string | null
+          emotional_trigger?: string | null
           faq?: Json
+          flagship_story?: string | null
           id?: string
           internal_notes?: string | null
           long_description?: string | null
+          memorable_takeaway?: string | null
           mission?: string | null
           partners?: Json
           primary_goal?: string | null
           problem_statement?: string | null
           raw_notes?: string | null
+          representative_scene?: string | null
           secondary_goal?: string | null
           services?: Json
           short_description?: string | null
@@ -72,6 +84,7 @@ export type Database = {
           vision?: string | null
         }
         Update: {
+          anti_brand?: string | null
           audience?: Json
           brand_keywords?: Json
           client_id?: string
@@ -80,15 +93,20 @@ export type Database = {
           cta_primary_label?: string | null
           cta_secondary_href?: string | null
           cta_secondary_label?: string | null
+          desired_feelings?: string | null
+          emotional_trigger?: string | null
           faq?: Json
+          flagship_story?: string | null
           id?: string
           internal_notes?: string | null
           long_description?: string | null
+          memorable_takeaway?: string | null
           mission?: string | null
           partners?: Json
           primary_goal?: string | null
           problem_statement?: string | null
           raw_notes?: string | null
+          representative_scene?: string | null
           secondary_goal?: string | null
           services?: Json
           short_description?: string | null
@@ -311,6 +329,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "media_assets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_notes: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          emotional_value: string | null
+          id: string
+          image_url: string
+          is_hero_candidate: boolean
+          suggested_usage: string | null
+          title: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          emotional_value?: string | null
+          id?: string
+          image_url: string
+          is_hero_candidate?: boolean
+          suggested_usage?: string | null
+          title?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          emotional_value?: string | null
+          id?: string
+          image_url?: string
+          is_hero_candidate?: boolean
+          suggested_usage?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_notes_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

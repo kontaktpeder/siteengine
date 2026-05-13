@@ -77,7 +77,21 @@ REGLER:
 - layout_style: centered, split, grid, editorial.
 - Ikke ta med partners-modul hvis det ikke finnes partnere i Brain. Ikke ta med faq-modul hvis det ikke finnes spørsmål.
 - Theme: bruk oklch(...) for farger.
-- Strukturen på sections skal følge en gjennomtenkt rekkefølge for valgt site_type/primary_intent.`;
+- Strukturen på sections skal følge en gjennomtenkt rekkefølge for valgt site_type/primary_intent.
+
+MENNESKELIGE IDENTITETSFELTER (les aktivt og la dem styre forslaget):
+- flagship_story: Hvis satt — bruk denne historien som mulig hero-retning og prioriter en storytelling-/mission-seksjon tidlig (rett etter hero).
+- representative_scene: Hvis satt — la denne scenen prege hero-copy og imagery-retning (referer til den i sections.content/settings.imagery_direction).
+- emotional_trigger: Hvis satt — vev denne følelsen inn i mission/proof/contact_cta-copy.
+- anti_brand: Hvis satt — unngå denne tonen/stilen. F.eks. "ikke corporate" → unngå stiv/offentlig tone, hold copy varm og menneskelig.
+- desired_feelings: Hvis satt — la den styre tone, copy-rytme og visuell tetthet. F.eks. "trygg, rolig, sett" → mer luft, mykere copy, roligere CTA-er.
+- memorable_takeaway: Hvis satt — sørg for at denne ene tingen kommer tydelig frem i hero ELLER en dedikert seksjon.
+
+MEDIA NOTES (hvis tilgjengelig):
+- Du får en liste media_notes med image_url, title, description, emotional_value, suggested_usage, is_hero_candidate.
+- Hvis et bilde er is_hero_candidate=true, foreslå det som hero-bilde via sections[hero].content.image_url og settings.image_alt.
+- For øvrige bilder: foreslå hvilken seksjon de passer i (legg image_url i tilhørende sections[i].content.image_url) og bruk emotional_value/suggested_usage som veiledning.
+- Ikke finn på bilder som ikke er i listen.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
@@ -219,6 +233,7 @@ export async function generateAiSuggestion(input: {
   brain: Record<string, unknown>;
   recipe: Record<string, unknown> | null;
   sections: unknown[];
+  media_notes?: unknown[];
 }): Promise<AiSuggestion> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
@@ -235,10 +250,11 @@ export async function generateAiSuggestion(input: {
       brain: input.brain,
       recipe: input.recipe,
       sections_count: input.sections.length,
+      media_notes: input.media_notes ?? [],
     },
     expected_format: {
       client: { description: "", theme: { primaryColor: "", backgroundColor: "", surfaceColor: "", textColor: "", radius: "", fontStyle: "" } },
-      brain: { site_type: "", primary_goal: "", secondary_goal: "", audience: [], brand_keywords: [], tone_keywords: [], short_description: "", long_description: "", mission: "", vision: "", problem_statement: "", solution_statement: "", trust_points: [], services: [], partners: [], faq: [], cta_primary_label: "", cta_primary_href: "", cta_secondary_label: "", cta_secondary_href: "" },
+      brain: { site_type: "", primary_goal: "", secondary_goal: "", audience: [], brand_keywords: [], tone_keywords: [], short_description: "", long_description: "", mission: "", vision: "", problem_statement: "", solution_statement: "", trust_points: [], services: [], partners: [], faq: [], cta_primary_label: "", cta_primary_href: "", cta_secondary_label: "", cta_secondary_href: "", flagship_story: "", emotional_trigger: "", anti_brand: "", memorable_takeaway: "", representative_scene: "", desired_feelings: "" },
       recipe: { recipe_type: "", site_type: "", primary_intent: "", design_direction: "", color_palette: {}, typography: {}, layout_preferences: {}, module_strategy: {}, variant_presets: {}, enabled_modules: [], navigation: [], footer: {} },
       home_page: { title: "", meta_title: "", meta_description: "", status: "published" },
       sections: [{ module_type: "", variant: "", sort_order: 0, is_visible: true, anchor_id: "", eyebrow: "", title: "", subtitle: "", body: "", cta_label: "", cta_href: "", background_style: "", layout_style: "", content: {}, settings: {} }],
