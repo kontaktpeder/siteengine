@@ -6,6 +6,79 @@ interface NavItem {
   href: string;
 }
 
+function buildFallbackSections(data: SiteData) {
+  const recipe = data.recipe;
+  const enabledModules = Array.isArray(recipe?.enabled_modules)
+    ? recipe.enabled_modules.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+
+  const moduleOrder = enabledModules.length
+    ? enabledModules
+    : ["hero", "trust_strip", "mission", "services_grid", "proof", "faq", "contact_cta"];
+
+  const titles: Record<string, string> = {
+    hero: data.client.name,
+    trust_strip: "Hvorfor velge oss",
+    mission: "Om oss",
+    services_grid: "Våre kurs",
+    proof: "Hvem vi hjelper",
+    faq: "Vanlige spørsmål",
+    contact_cta: "Ta kontakt",
+  };
+
+  const subtitles: Record<string, string> = {
+    hero:
+      data.brain?.short_description ?? data.client.description ?? "",
+    services_grid:
+      data.brain?.solution_statement ?? "Praktisk og tydelig opplæring tilpasset behovet ditt.",
+    proof:
+      data.brain?.long_description ?? "",
+    contact_cta:
+      data.brain?.primary_goal ?? data.brain?.short_description ?? "",
+  };
+
+  const eyebrows: Record<string, string> = {
+    hero: data.client.name,
+    mission: "Om oss",
+    services_grid: "Kurs",
+    proof: "Målgruppe",
+    faq: "FAQ",
+    contact_cta: "Kontakt",
+  };
+
+  const anchors: Record<string, string> = {
+    hero: "top",
+    mission: "om",
+    services_grid: "kurs",
+    proof: "om",
+    faq: "faq",
+    contact_cta: "kontakt",
+  };
+
+  return moduleOrder.map((moduleType, index) => ({
+    id: `fallback-${moduleType}-${index}`,
+    page_id: data.page?.id ?? "fallback-page",
+    module_type: moduleType,
+    variant: moduleType === "faq" ? "accordion" : "default",
+    sort_order: index,
+    title: titles[moduleType] ?? null,
+    subtitle: subtitles[moduleType] ?? null,
+    body: null,
+    image_url: null,
+    content: {},
+    settings: {},
+    is_visible: true,
+    created_at: new Date(0).toISOString(),
+    updated_at: new Date(0).toISOString(),
+    anchor_id: anchors[moduleType] ?? null,
+    eyebrow: eyebrows[moduleType] ?? null,
+    cta_label: moduleType === "contact_cta" ? data.brain?.cta_primary_label ?? null : null,
+    cta_href: moduleType === "contact_cta" ? data.brain?.cta_primary_href ?? null : null,
+    background_style: moduleType === "trust_strip" ? "muted" : null,
+    layout_style: moduleType === "hero" ? "centered" : null,
+  }));
+}
+
 function themeToCssVars(theme: ThemeTokens | undefined | null): React.CSSProperties {
   if (!theme) return {};
   const vars: Record<string, string> = {};
@@ -26,6 +99,7 @@ export function SiteShell({ data }: { data: SiteData }) {
   const brain = data.brain;
   const theme = (data.client.theme ?? {}) as ThemeTokens;
   const style = themeToCssVars(theme);
+  const sections = data.sections.length ? data.sections : buildFallbackSections(data);
   const fontClass =
     theme.fontStyle === "sans"
       ? "[&_h1]:font-sans [&_h2]:font-sans [&_h3]:font-sans [&_h4]:font-sans"
@@ -64,7 +138,7 @@ export function SiteShell({ data }: { data: SiteData }) {
       </header>
 
       <main>
-        {data.sections.map((s) => (
+        {sections.map((s) => (
           <div key={s.id}>{renderModule({ section: s, brain, site: data })}</div>
         ))}
       </main>
