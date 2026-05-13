@@ -558,6 +558,82 @@ function StudioEditor() {
             ) : null}
           </Section>
 
+          <Section title="Creative direction">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Disse feltene styrer HVORDAN AI presenterer Client Brain — ikke OM
+              ting tas med. Minimalisme her betyr aldri mindre innhold.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Content depth" hint="Hvor rik siden skal være">
+                <select
+                  className={inputCls}
+                  value={recipe.content_depth}
+                  onChange={(e) => setRecipe({ ...recipe, content_depth: e.target.value })}
+                >
+                  <option value="lean">lean</option>
+                  <option value="balanced">balanced</option>
+                  <option value="rich">rich</option>
+                </select>
+              </Field>
+              <Field label="Storytelling mode" hint="Hvordan historien fortelles">
+                <select
+                  className={inputCls}
+                  value={recipe.storytelling_mode}
+                  onChange={(e) => setRecipe({ ...recipe, storytelling_mode: e.target.value })}
+                >
+                  <option value="minimal">minimal</option>
+                  <option value="editorial">editorial</option>
+                  <option value="documentary">documentary</option>
+                  <option value="conversion">conversion</option>
+                </select>
+              </Field>
+              <Field label="Visual proof level" hint="Hvor mye bildebevis siden skal vise">
+                <select
+                  className={inputCls}
+                  value={recipe.visual_proof_level}
+                  onChange={(e) => setRecipe({ ...recipe, visual_proof_level: e.target.value })}
+                >
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </Field>
+              <Field label="Rhythm strategy" hint="Variasjon mellom seksjoner">
+                <select
+                  className={inputCls}
+                  value={recipe.rhythm_strategy}
+                  onChange={(e) => setRecipe({ ...recipe, rhythm_strategy: e.target.value })}
+                >
+                  <option value="calm">calm</option>
+                  <option value="varied">varied</option>
+                  <option value="high_contrast">high_contrast</option>
+                </select>
+              </Field>
+              <Field label="Compression policy" hint="Hvor mye Client Brain-detaljer skal bevares">
+                <select
+                  className={inputCls}
+                  value={recipe.compression_policy}
+                  onChange={(e) => setRecipe({ ...recipe, compression_policy: e.target.value })}
+                >
+                  <option value="preserve_detail">preserve_detail</option>
+                  <option value="simplify">simplify</option>
+                  <option value="aggressively_summarize">aggressively_summarize</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-4">
+              <Field label="Creative direction (fritekst — høyprioritert AI-instruks)" hint="Skriv som om du brifer en designer. Dette overstyrer Studio Brain-referanser, men aldri Client Brain-substans.">
+                <textarea
+                  className={inputCls}
+                  rows={6}
+                  value={recipe.creative_direction}
+                  onChange={(e) => setRecipe({ ...recipe, creative_direction: e.target.value })}
+                  placeholder="F.eks. 'Dokumentarisk og varm. Bruk bilder fra aktivitetene aktivt. Ikke corporate. Behold konkrete scener fra brain-en. Vekt på mennesker og øyeblikk.'"
+                />
+              </Field>
+            </div>
+          </Section>
+
 
           <Section title="Kjerne">
             <div className="grid gap-4">
