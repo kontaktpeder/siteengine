@@ -426,6 +426,65 @@ function StudioEditor() {
 
       {tab === "brain" && (
         <>
+          <Section title="Generer forslag fra Client Brain">
+            <p className="text-sm text-muted-foreground">
+              Lag et forslag basert på det du har fylt inn under (lokal state — du
+              trenger ikke lagre Brain først). «Bruk forslag» erstatter alle
+              seksjoner på forsiden, oppdaterer Site Recipe og klientens theme.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handleGenerate}
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+              >
+                Generer forslag
+              </button>
+              {suggestion ? (
+                <>
+                  <button
+                    onClick={handleApplySuggestion}
+                    disabled={busy}
+                    className="rounded-full border border-primary bg-primary/10 px-5 py-2.5 text-sm font-medium text-primary disabled:opacity-50"
+                  >
+                    {busy ? "Tar i bruk…" : "Bruk forslag"}
+                  </button>
+                  <button
+                    onClick={() => setSuggestion(null)}
+                    className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
+                  >
+                    Avbryt
+                  </button>
+                </>
+              ) : null}
+            </div>
+            {suggestion ? (
+              <div className="mt-5 grid gap-3 rounded-xl border border-border bg-muted/30 p-5 text-sm">
+                <div className="grid gap-1 sm:grid-cols-2">
+                  <div><span className="text-muted-foreground">Arketype:</span> {suggestion.archetype}</div>
+                  <div><span className="text-muted-foreground">Site type:</span> {suggestion.site_type}</div>
+                  <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.primary_intent}</div>
+                  <div><span className="text-muted-foreground">Design direction:</span> {suggestion.design_direction}</div>
+                </div>
+                <div>
+                  <div className="mb-1 text-muted-foreground">Moduler ({suggestion.sections.length}):</div>
+                  <ol className="list-decimal pl-5">
+                    {suggestion.sections.map((s, i) => (
+                      <li key={i}>
+                        <span className="font-medium">{s.module_type}</span>
+                        <span className="text-muted-foreground"> · {s.variant}</span>
+                        {s.title ? <span className="text-muted-foreground"> — {s.title}</span> : null}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-muted-foreground">Se theme/recipe JSON</summary>
+                  <pre className="mt-2 overflow-x-auto rounded-lg bg-background p-3 text-xs">{JSON.stringify({ theme: suggestion.theme, variant_presets: suggestion.variant_presets, navigation: suggestion.navigation, footer: suggestion.footer }, null, 2)}</pre>
+                </details>
+              </div>
+            ) : null}
+          </Section>
+
           <Section title="Kjerne">
             <div className="grid gap-4">
               <Field label="Site type">
