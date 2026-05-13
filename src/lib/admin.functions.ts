@@ -382,3 +382,164 @@ export const seedOpplev = createServerFn({ method: "POST" }).handler(async () =>
 
   return { ok: true, client_id: client.id };
 });
+
+// ---------- Brain → page generation ----------
+
+import {
+  SUPPORTED_MODULE_TYPES,
+  type BrainSuggestionPreview,
+  type BrainSuggestionSection,
+} from "./suggest-from-brain";
+
+const SUPPORTED_MODULE_SET = new Set<string>(
+  SUPPORTED_MODULE_TYPES as readonly string[],
+);
+
+function assertKnownModules(sections: { module_type: string }[]) {
+  for (const s of sections) {
+    if (!SUPPORTED_MODULE_SET.has(s.module_type)) {
+      throw new Error(`Ukjent module_type: ${s.module_type}`);
+    }
+  }
+}
+
+async function ensureHomePage(clientId: string) {
+  const { data: existing } = await supabaseAdmin
+    .from("site_pages")
+    .select("*")
+    .eq("client_id", clientId)
+    .eq("slug", "/")
+    .maybeSingle();
+  if (existing) return existing;
+  const { data, error } = await supabaseAdmin
+    .from("site_pages")
+    .insert({
+      client_id: clientId,
+      slug: "/",
+      title: "Forsiden",
+      status: "draft",
+      sort_order: 0,
+      noindex: false,
+    } as never)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export const applyBrainSuggestion = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { client_id: string; suggestion: BrainSuggestionPreview }) => input,
+  )
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const { client_id, suggestion } = data;
+    assertKnownModules(suggestion.sections);
+
+    // 1. Ensure home page exists
+    const page = await ensureHomePage(client_id);
+
+    // 2. Upsert site_recipes
+    const { data: existingRecipe } = await supabaseAdmin
+      .from("site_recipes")
+      .select("id")
+      .eq("client_id", client_id)
+      .limit(1);
+    const recipePayload = {
+      client_id,
+      recipe_type: suggestion.recipe_type,
+      site_type: suggestion.site_type,
+      primary_intent: suggestion.primary_intent,
+      design_direction: suggestion.design_direction,
+      color_palette: {} as never,
+      typography: {} as never,
+      layout_preferences: {} as never,
+      module_strategy: {} as never,
+      variant_presets: suggestion.variant_presets as never,
+      enabled_modules: suggestion.enabled_modules as never,
+      navigation: suggestion.navigation as never,
+      footer: suggestion.footer as never,
+    };
+    if (existingRecipe && existingRecipe.length) {
+      const { error } = await supabaseAdmin
+        .from("site_recipes")
+        .update(recipePayload)
+        .eq("id", existingRecipe[0].id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin
+        .from("site_recipes")
+        .insert(recipePayload);
+      if (error) throw error;
+    }
+
+    // 3. Update client theme
+    const { error: themeErr } = await supabaseAdmin
+      .from("clients")
+      .update({ theme: suggestion.theme as never })
+      .eq("id", client_id);
+    if (themeErr) throw themeErr;
+
+    // 4. Replace sections
+    await supabaseAdmin.from("page_sections").delete().eq("page_id", page.id);
+    const rows = suggestion.sections.map((s, i) => ({
+      page_id: page.id,
+      module_type: s.module_type,
+      variant: s.variant ?? "default",
+      sort_order: typeof s.sort_order === "number" ? s.sort_order : i,
+      eyebrow: s.eyebrow ?? null,
+      title: s.title ?? null,
+      subtitle: s.subtitle ?? null,
+      body: s.body ?? null,
+      anchor_id: s.anchor_id ?? null,
+      background_style: s.background_style ?? null,
+      layout_style: s.layout_style ?? null,
+      cta_label: s.cta_label ?? null,
+      cta_href: s.cta_href ?? null,
+      content: (s.content ?? {}) as never,
+      settings: (s.settings ?? {}) as never,
+      is_visible: s.is_visible ?? true,
+    }));
+    const { error: insErr } = await supabaseAdmin
+      .from("page_sections")
+      .insert(rows as never);
+    if (insErr) throw insErr;
+
+    return { ok: true, page_id: page.id, sections: rows.length };
+  });
+
+export const saveHomePageSections = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { client_id: string; sections: BrainSuggestionSection[] }) => input,
+  )
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    assertKnownModules(data.sections);
+    const page = await ensureHomePage(data.client_id);
+    await supabaseAdmin.from("page_sections").delete().eq("page_id", page.id);
+    const rows = data.sections.map((s, i) => ({
+      page_id: page.id,
+      module_type: s.module_type,
+      variant: s.variant ?? "default",
+      sort_order: typeof s.sort_order === "number" ? s.sort_order : i,
+      eyebrow: s.eyebrow ?? null,
+      title: s.title ?? null,
+      subtitle: s.subtitle ?? null,
+      body: s.body ?? null,
+      anchor_id: s.anchor_id ?? null,
+      background_style: s.background_style ?? null,
+      layout_style: s.layout_style ?? null,
+      cta_label: s.cta_label ?? null,
+      cta_href: s.cta_href ?? null,
+      content: (s.content ?? {}) as never,
+      settings: (s.settings ?? {}) as never,
+      is_visible: s.is_visible ?? true,
+    }));
+    if (rows.length) {
+      const { error } = await supabaseAdmin
+        .from("page_sections")
+        .insert(rows as never);
+      if (error) throw error;
+    }
+    return { ok: true, page_id: page.id, sections: rows.length };
+  });
