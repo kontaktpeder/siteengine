@@ -311,6 +311,12 @@ function fallbackSuggestion(brain: Record<string, unknown>): AiSuggestion {
       enabled_modules: heur.enabled_modules,
       navigation: heur.navigation,
       footer: heur.footer as Record<string, unknown>,
+      content_depth: "balanced",
+      storytelling_mode: "editorial",
+      visual_proof_level: "medium",
+      rhythm_strategy: "varied",
+      compression_policy: "preserve_detail",
+      creative_direction: "",
     },
     home_page: {
       title: "Forsiden",
