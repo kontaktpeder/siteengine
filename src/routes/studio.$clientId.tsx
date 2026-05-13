@@ -965,23 +965,76 @@ function MediaNotesEditor({ clientId }: { clientId: string }) {
     }
   }
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleUpload(file: File) {
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+      const path = `${clientId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage
+        .from("media")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("media").getPublicUrl(path);
+      setDraft((d) => ({
+        ...d,
+        image_url: data.publicUrl,
+        title: d.title || file.name.replace(/\.[^.]+$/, ""),
+      }));
+    } catch (e) {
+      setUploadError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <Section title="Media notes — bilde-kontekst for AI">
       <p className="text-sm text-muted-foreground">
-        Lim inn bilde-URL-er og fortell AI litt om hvert bilde. AI bruker dette
-        til å foreslå hero-bilde og hvor bilder passer i seksjonene. Ingen
-        opplasting — bare metadata.
+        Last opp bilder og fortell AI litt om hvert bilde. AI bruker dette
+        til å foreslå hero-bilde og hvor bilder passer i seksjonene.
       </p>
 
       <div className="mt-4 rounded-xl border border-border bg-muted/20 p-4">
         <div className="grid gap-3">
-          <Field label="Bilde-URL" hint="Full URL til bildet (https://…)">
+          <Field label="Bilde" hint="Last opp en fil (PNG, JPG, WebP)">
             <input
+              type="file"
+              accept="image/*"
               className={inputCls}
-              value={draft.image_url}
-              onChange={(e) => setDraft({ ...draft, image_url: e.target.value })}
-              placeholder="https://…"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(f);
+                e.target.value = "";
+              }}
+              disabled={uploading}
             />
+            {uploading ? (
+              <p className="mt-1 text-xs text-muted-foreground">Laster opp…</p>
+            ) : null}
+            {uploadError ? (
+              <p className="mt-1 text-xs text-destructive">{uploadError}</p>
+            ) : null}
+            {draft.image_url ? (
+              <div className="mt-2 flex items-center gap-2">
+                <img
+                  src={draft.image_url}
+                  alt=""
+                  className="h-12 w-12 rounded object-cover border border-border"
+                />
+                <a
+                  href={draft.image_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-muted-foreground underline truncate"
+                >
+                  {draft.image_url}
+                </a>
+              </div>
+            ) : null}
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Tittel">
