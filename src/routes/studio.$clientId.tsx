@@ -601,43 +601,15 @@ function StudioEditor() {
       )}
 
       {tab === "sections" && (
-        <Section title={`Sections${data.page ? ` på ${data.page.slug}` : ""}`}>
-          {data.sections.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Ingen sections enda. Bruk seed eller legg til via SQL/API.
-            </p>
-          ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Module</th>
-                    <th className="px-4 py-3">Variant</th>
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Bg</th>
-                    <th className="px-4 py-3">Visible</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.sections.map((s) => (
-                    <tr key={s.id} className="border-t border-border">
-                      <td className="px-4 py-3 text-muted-foreground">{s.sort_order}</td>
-                      <td className="px-4 py-3 font-medium">{s.module_type}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.variant ?? "default"}</td>
-                      <td className="px-4 py-3">{s.title ?? <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.background_style ?? "—"}</td>
-                      <td className="px-4 py-3">{s.is_visible ? "Ja" : "Nei"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <p className="mt-4 text-xs text-muted-foreground">
-            Read-only i denne versjonen. Bruk «Seed Foreningen Opplev» for å regenerere standardsettet.
-          </p>
-        </Section>
+        <SectionsEditor
+          clientId={c.id}
+          initial={data.sections}
+          onSaved={() => {
+            setMsg("Seksjoner lagret.");
+            router.invalidate();
+          }}
+          onError={(m) => setMsg(`Feil: ${m}`)}
+        />
       )}
     </div>
   );
