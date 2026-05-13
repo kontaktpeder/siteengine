@@ -24,6 +24,7 @@ import type {
   PageSection,
   SiteRecipe,
 } from "@/lib/site-types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/studio/$clientId")({
   loader: ({ params }) => getClientBundle({ data: { id: params.clientId } }),
