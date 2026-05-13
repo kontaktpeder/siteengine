@@ -16,6 +16,89 @@ function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
 
+function asObject(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+function pickText(obj: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = obj[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+function normalizeAudience(source: unknown): AudienceItem[] {
+  return asArray<unknown>(source)
+    .map((item) => {
+      if (typeof item === "string") return { label: item };
+      const obj = asObject(item);
+      if (!obj) return null;
+      const label = pickText(obj, ["label", "title", "name"]);
+      if (!label) return null;
+      const description = pickText(obj, ["description", "body", "text"]);
+      return description ? { label, description } : { label };
+    })
+    .filter((item): item is AudienceItem => Boolean(item));
+}
+
+function normalizeTrustPoints(source: unknown): TrustPoint[] {
+  return asArray<unknown>(source)
+    .map((item) => {
+      if (typeof item === "string") return { label: item };
+      const obj = asObject(item);
+      if (!obj) return null;
+      const label = pickText(obj, ["label", "title", "name"]);
+      if (!label) return null;
+      const description = pickText(obj, ["description", "body", "text"]);
+      return description ? { label, description } : { label };
+    })
+    .filter((item): item is TrustPoint => Boolean(item));
+}
+
+function normalizeServices(source: unknown): ServiceItem[] {
+  return asArray<unknown>(source)
+    .map((item) => {
+      if (typeof item === "string") return { title: item };
+      const obj = asObject(item);
+      if (!obj) return null;
+      const title = pickText(obj, ["title", "label", "name"]);
+      if (!title) return null;
+      const description = pickText(obj, ["description", "body", "text"]);
+      const icon = pickText(obj, ["icon"]);
+      return { title, ...(description ? { description } : {}), ...(icon ? { icon } : {}) };
+    })
+    .filter((item): item is ServiceItem => Boolean(item));
+}
+
+function normalizePartners(source: unknown): PartnerItem[] {
+  return asArray<unknown>(source)
+    .map((item) => {
+      if (typeof item === "string") return { name: item };
+      const obj = asObject(item);
+      if (!obj) return null;
+      const name = pickText(obj, ["name", "label", "title"]);
+      if (!name) return null;
+      const url = pickText(obj, ["url", "href"]);
+      return url ? { name, url } : { name };
+    })
+    .filter((item): item is PartnerItem => Boolean(item));
+}
+
+function normalizeFaq(source: unknown): FaqItem[] {
+  return asArray<unknown>(source)
+    .map((item) => {
+      if (typeof item === "string") return { question: item, answer: "" };
+      const obj = asObject(item);
+      if (!obj) return null;
+      const question = pickText(obj, ["question", "q", "title"]);
+      if (!question) return null;
+      const answer = pickText(obj, ["answer", "a", "body", "description", "text"]) ?? "";
+      return { question, answer };
+    })
+    .filter((item): item is FaqItem => Boolean(item));
+}
+
 function sectionAnchor(section: PageSection): string | undefined {
   if (section.anchor_id) return section.anchor_id;
   const settings = (section.settings ?? {}) as { anchor?: string };
@@ -176,7 +259,7 @@ function HeroModule({ section, brain }: ModuleProps) {
 /* ---------- TRUST STRIP ---------- */
 
 function TrustStripModule({ section, brain }: ModuleProps) {
-  const items = asArray<TrustPoint>(brain?.trust_points);
+  const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
   return (
     <Container id={sectionAnchor(section)} bg={section.background_style} className="py-10">
@@ -261,7 +344,7 @@ function MissionModule({ section, brain }: ModuleProps) {
 /* ---------- SERVICES GRID ---------- */
 
 function ServicesGridModule({ section, brain }: ModuleProps) {
-  const items = asArray<ServiceItem>(brain?.services);
+  const items = normalizeServices(brain?.services);
   if (!items.length) return null;
   const compact = section.variant === "compact";
   const dark = isDarkBg(section.background_style);
@@ -337,7 +420,7 @@ function ActivitiesModule({ section }: ModuleProps) {
 /* ---------- PARTNERS ---------- */
 
 function PartnersModule({ section, brain }: ModuleProps) {
-  const items = asArray<PartnerItem>(brain?.partners);
+  const items = normalizePartners(brain?.partners);
   if (!items.length) return null;
   const variant = section.variant || "text_list";
   const dark = isDarkBg(section.background_style);
