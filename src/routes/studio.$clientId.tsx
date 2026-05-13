@@ -502,7 +502,18 @@ function StudioEditor() {
                   <div><span className="text-muted-foreground">Site type:</span> {suggestion.recipe.site_type}</div>
                   <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.recipe.primary_intent}</div>
                   <div><span className="text-muted-foreground">Design direction:</span> {suggestion.recipe.design_direction}</div>
+                  <div><span className="text-muted-foreground">Content depth:</span> {(suggestion.recipe as { content_depth?: string }).content_depth ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Storytelling mode:</span> {(suggestion.recipe as { storytelling_mode?: string }).storytelling_mode ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Visual proof:</span> {(suggestion.recipe as { visual_proof_level?: string }).visual_proof_level ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Rhythm:</span> {(suggestion.recipe as { rhythm_strategy?: string }).rhythm_strategy ?? "—"}</div>
+                  <div><span className="text-muted-foreground">Compression:</span> {(suggestion.recipe as { compression_policy?: string }).compression_policy ?? "—"}</div>
                 </div>
+                {(suggestion.recipe as { creative_direction?: string }).creative_direction ? (
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <div className="text-xs uppercase text-muted-foreground">Creative direction</div>
+                    <div className="mt-1 whitespace-pre-wrap text-xs">{(suggestion.recipe as { creative_direction?: string }).creative_direction}</div>
+                  </div>
+                ) : null}
                 {suggestion.warnings?.length ? (
                   <div className="rounded-md bg-amber-100/40 p-2 text-xs text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
                     {suggestion.warnings.join(" · ")}
