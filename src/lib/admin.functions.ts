@@ -544,3 +544,189 @@ export const saveHomePageSections = createServerFn({ method: "POST" })
     }
     return { ok: true, page_id: page.id, sections: rows.length };
   });
+
+// ---------- AI-powered suggestion ----------
+
+export const generateAiBrainSuggestion = createServerFn({ method: "POST" })
+  .inputValidator(
+    (input: { client_id: string; brain_draft?: Record<string, unknown> }) => input,
+  )
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const [{ data: client }, { data: brains }, { data: recipes }, { data: pages }] =
+      await Promise.all([
+        supabaseAdmin.from("clients").select("*").eq("id", data.client_id).single(),
+        supabaseAdmin
+          .from("client_brains")
+          .select("*")
+          .eq("client_id", data.client_id)
+          .limit(1),
+        supabaseAdmin
+          .from("site_recipes")
+          .select("*")
+          .eq("client_id", data.client_id)
+          .limit(1),
+        supabaseAdmin
+          .from("site_pages")
+          .select("id,slug")
+          .eq("client_id", data.client_id),
+      ]);
+
+    const home = pages?.find((p) => p.slug === "/" || p.slug === "home") ?? null;
+    let sections: unknown[] = [];
+    if (home) {
+      const { data: sec } = await supabaseAdmin
+        .from("page_sections")
+        .select("*")
+        .eq("page_id", home.id);
+      sections = sec ?? [];
+    }
+
+    const brainMerged = {
+      ...((brains?.[0] as Record<string, unknown>) ?? {}),
+      ...(data.brain_draft ?? {}),
+    };
+
+    const suggestion = await generateAiSuggestion({
+      client: client as Record<string, unknown> | null,
+      brain: brainMerged,
+      recipe: (recipes?.[0] as Record<string, unknown>) ?? null,
+      sections,
+    });
+    return suggestion;
+  });
+
+export const applyAiSuggestion = createServerFn({ method: "POST" })
+  .inputValidator((input: { client_id: string; suggestion: AiSuggestion }) => input)
+  .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) throw new Error(STUDIO_ENV_ERROR);
+    const { client_id, suggestion } = data;
+    assertKnownModules(suggestion.sections);
+
+    // 1. Client (description + theme)
+    const clientPatch: Record<string, unknown> = {};
+    if (suggestion.client?.theme && Object.keys(suggestion.client.theme).length) {
+      clientPatch.theme = suggestion.client.theme;
+    }
+    if (typeof suggestion.client?.description === "string" && suggestion.client.description.trim()) {
+      clientPatch.description = suggestion.client.description;
+    }
+    if (Object.keys(clientPatch).length) {
+      const { error } = await supabaseAdmin
+        .from("clients")
+        .update(clientPatch as never)
+        .eq("id", client_id);
+      if (error) throw error;
+    }
+
+    // 2. Brain (merge non-empty fields)
+    const brainIn = suggestion.brain ?? {};
+    const brainAllowed = [
+      "site_type", "primary_goal", "secondary_goal", "audience", "brand_keywords",
+      "tone_keywords", "short_description", "long_description", "mission", "vision",
+      "problem_statement", "solution_statement", "trust_points", "services", "partners",
+      "faq", "cta_primary_label", "cta_primary_href", "cta_secondary_label", "cta_secondary_href",
+    ];
+    const brainPatch: Record<string, unknown> = { client_id };
+    for (const k of brainAllowed) {
+      const v = (brainIn as Record<string, unknown>)[k];
+      if (v === undefined || v === null) continue;
+      if (typeof v === "string" && !v.trim()) continue;
+      if (Array.isArray(v) && v.length === 0) continue;
+      brainPatch[k] = v;
+    }
+    const { data: existingBrain } = await supabaseAdmin
+      .from("client_brains")
+      .select("id")
+      .eq("client_id", client_id)
+      .limit(1);
+    if (existingBrain && existingBrain.length) {
+      const { error } = await supabaseAdmin
+        .from("client_brains")
+        .update(brainPatch as never)
+        .eq("id", existingBrain[0].id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin
+        .from("client_brains")
+        .insert(brainPatch as never);
+      if (error) throw error;
+    }
+
+    // 3. Recipe
+    const r = suggestion.recipe;
+    const { data: existingRecipe } = await supabaseAdmin
+      .from("site_recipes")
+      .select("id")
+      .eq("client_id", client_id)
+      .limit(1);
+    const recipePayload = {
+      client_id,
+      recipe_type: r.recipe_type,
+      site_type: r.site_type,
+      primary_intent: r.primary_intent,
+      design_direction: r.design_direction,
+      color_palette: (r.color_palette ?? {}) as never,
+      typography: (r.typography ?? {}) as never,
+      layout_preferences: (r.layout_preferences ?? {}) as never,
+      module_strategy: (r.module_strategy ?? {}) as never,
+      variant_presets: (r.variant_presets ?? {}) as never,
+      enabled_modules: (r.enabled_modules ?? []) as never,
+      navigation: (r.navigation ?? []) as never,
+      footer: (r.footer ?? {}) as never,
+    };
+    if (existingRecipe && existingRecipe.length) {
+      const { error } = await supabaseAdmin
+        .from("site_recipes")
+        .update(recipePayload)
+        .eq("id", existingRecipe[0].id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin.from("site_recipes").insert(recipePayload);
+      if (error) throw error;
+    }
+
+    // 4. Home page
+    const page = await ensureHomePage(client_id);
+    const homePatch: Record<string, unknown> = {};
+    if (suggestion.home_page?.title) homePatch.title = suggestion.home_page.title;
+    if (suggestion.home_page?.meta_title) homePatch.meta_title = suggestion.home_page.meta_title;
+    if (suggestion.home_page?.meta_description)
+      homePatch.meta_description = suggestion.home_page.meta_description;
+    if (suggestion.home_page?.status) homePatch.status = suggestion.home_page.status;
+    if (Object.keys(homePatch).length) {
+      const { error } = await supabaseAdmin
+        .from("site_pages")
+        .update(homePatch as never)
+        .eq("id", page.id);
+      if (error) throw error;
+    }
+
+    // 5. Replace sections
+    await supabaseAdmin.from("page_sections").delete().eq("page_id", page.id);
+    const rows = suggestion.sections.map((s, i) => ({
+      page_id: page.id,
+      module_type: s.module_type,
+      variant: s.variant ?? "default",
+      sort_order: typeof s.sort_order === "number" ? s.sort_order : i,
+      eyebrow: s.eyebrow ?? null,
+      title: s.title ?? null,
+      subtitle: s.subtitle ?? null,
+      body: s.body ?? null,
+      anchor_id: s.anchor_id ?? null,
+      background_style: s.background_style ?? null,
+      layout_style: s.layout_style ?? null,
+      cta_label: s.cta_label ?? null,
+      cta_href: s.cta_href ?? null,
+      content: (s.content ?? {}) as never,
+      settings: (s.settings ?? {}) as never,
+      is_visible: s.is_visible ?? true,
+    }));
+    if (rows.length) {
+      const { error } = await supabaseAdmin
+        .from("page_sections")
+        .insert(rows as never);
+      if (error) throw error;
+    }
+    return { ok: true, page_id: page.id, sections: rows.length, source: suggestion.source };
+  });
