@@ -3,25 +3,62 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { PageSection } from "./site-types";
 import { OPPLEV_SEED } from "./seed-opplev.server";
 
+const STUDIO_ENV_ERROR =
+  "Studio admin er ikke tilgjengelig i dette miljøet fordi SUPABASE_SERVICE_ROLE_KEY mangler.";
+
+function hasStudioAdminAccess() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 export const listClients = createServerFn({ method: "GET" }).handler(async () => {
+  if (!hasStudioAdminAccess()) {
+    return {
+      clients: [],
+      adminAvailable: false,
+      message: STUDIO_ENV_ERROR,
+    };
+  }
+
   const { data: clients, error } = await supabaseAdmin
     .from("clients")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  if (!clients?.length) return [];
+  if (!clients?.length) {
+    return {
+      clients: [],
+      adminAvailable: true,
+      message: null,
+    };
+  }
 
   const { data: recipes } = await supabaseAdmin
     .from("site_recipes")
     .select("client_id, site_type");
   const map = new Map<string, string | null>();
   (recipes ?? []).forEach((r) => map.set(r.client_id, r.site_type ?? null));
-  return clients.map((c) => ({ ...c, site_type: map.get(c.id) ?? null }));
+  return {
+    clients: clients.map((c) => ({ ...c, site_type: map.get(c.id) ?? null })),
+    adminAvailable: true,
+    message: null,
+  };
 });
 
 export const getClientBundle = createServerFn({ method: "GET" })
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) {
+      return {
+        client: null,
+        brain: null,
+        recipe: null,
+        page: null,
+        sections: [] as PageSection[],
+        adminAvailable: false,
+        message: STUDIO_ENV_ERROR,
+      };
+    }
+
     const [{ data: client }, { data: brains }, { data: recipes }, { data: pages }] =
       await Promise.all([
         supabaseAdmin.from("clients").select("*").eq("id", data.id).single(),
@@ -49,6 +86,8 @@ export const getClientBundle = createServerFn({ method: "GET" })
       recipe: recipes?.[0] ?? null,
       page: home,
       sections,
+      adminAvailable: true,
+      message: null,
     };
   });
 
@@ -71,6 +110,10 @@ export const upsertClient = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) {
+      throw new Error(STUDIO_ENV_ERROR);
+    }
+
     const payload = {
       name: data.name,
       slug: data.slug,
@@ -107,6 +150,10 @@ export const upsertClient = createServerFn({ method: "POST" })
 export const upsertBrain = createServerFn({ method: "POST" })
   .inputValidator((input: Record<string, unknown> & { client_id: string }) => input)
   .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) {
+      throw new Error(STUDIO_ENV_ERROR);
+    }
+
     const { data: existing } = await supabaseAdmin
       .from("client_brains")
       .select("id")
@@ -177,6 +224,10 @@ export const upsertRecipe = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ data }) => {
+    if (!hasStudioAdminAccess()) {
+      throw new Error(STUDIO_ENV_ERROR);
+    }
+
     const { data: existing } = await supabaseAdmin
       .from("site_recipes")
       .select("id")
@@ -223,6 +274,10 @@ export const upsertRecipe = createServerFn({ method: "POST" })
  * Idempotent — looks up by slug "opplev".
  */
 export const seedOpplev = createServerFn({ method: "POST" }).handler(async () => {
+  if (!hasStudioAdminAccess()) {
+    throw new Error(STUDIO_ENV_ERROR);
+  }
+
   const seed = OPPLEV_SEED;
 
   // 1. Client
