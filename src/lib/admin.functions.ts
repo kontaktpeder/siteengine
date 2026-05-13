@@ -188,7 +188,13 @@ export const upsertBrain = createServerFn({ method: "POST" })
       cta_secondary_href: (data.cta_secondary_href as string) ?? null,
       raw_notes: (data.raw_notes as string) ?? null,
       internal_notes: (data.internal_notes as string) ?? null,
-    };
+      flagship_story: (data.flagship_story as string) ?? null,
+      emotional_trigger: (data.emotional_trigger as string) ?? null,
+      anti_brand: (data.anti_brand as string) ?? null,
+      memorable_takeaway: (data.memorable_takeaway as string) ?? null,
+      representative_scene: (data.representative_scene as string) ?? null,
+      desired_feelings: (data.desired_feelings as string) ?? null,
+    } as never;
 
     if (existing && existing.length) {
       const { data: row, error } = await supabaseAdmin
