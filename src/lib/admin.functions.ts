@@ -786,6 +786,12 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       enabled_modules: (r.enabled_modules ?? []) as never,
       navigation: (r.navigation ?? []) as never,
       footer: (r.footer ?? {}) as never,
+      content_depth: r.content_depth ?? "balanced",
+      storytelling_mode: r.storytelling_mode ?? "editorial",
+      visual_proof_level: r.visual_proof_level ?? "medium",
+      rhythm_strategy: r.rhythm_strategy ?? "varied",
+      compression_policy: r.compression_policy ?? "preserve_detail",
+      creative_direction: r.creative_direction ?? null,
     };
     if (existingRecipe && existingRecipe.length) {
       const { error } = await supabaseAdmin
