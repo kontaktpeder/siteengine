@@ -111,7 +111,7 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
       if (mt === "hero" && !VALID_HERO_VARIANTS.has(variant)) variant = "editorial";
       const bg = clampString(s.background_style, "default");
       const layout = clampString(s.layout_style, "");
-      return {
+      const row: BrainSuggestionSection = {
         module_type: mt as BrainSuggestionSection["module_type"],
         variant,
         sort_order: typeof s.sort_order === "number" ? (s.sort_order as number) : i,
@@ -127,7 +127,8 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
         layout_style: VALID_LAYOUT.has(layout) ? layout : null,
         content: asObj(s.content),
         settings: asObj(s.settings),
-      } satisfies BrainSuggestionSection;
+      };
+      return row;
     })
     .filter((s): s is BrainSuggestionSection => s !== null)
     .map((s, i) => ({ ...s, sort_order: i }));
