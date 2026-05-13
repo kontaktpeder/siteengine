@@ -139,7 +139,43 @@ STUDIO BRAIN REFERENCES (subtil stilistisk veiledning — IKKE fasit):
 - "Mer menneskelig" betyr bedre rytme, tydeligere fokus, sterkere historiefortelling, mer emosjonell klarhet — ikke mindre innhold.
 - Studio Brain skal raffinere, ikke redusere. Style, ikke sensurere. Strukturere, ikke erstatte identitet.
 - Hvis Studio Brain og Client Brain ser ut til å kollidere → Client Brain vinner. Alltid.
-- Ikke kopier tekst, layout, branding eller assets fra referansene.`;
+- Ikke kopier tekst, layout, branding eller assets fra referansene.
+
+SITE RECIPE — CREATIVE DIRECTION (styrer HVORDAN innholdet presenteres, ikke OM):
+Du får (og du skal selv foreslå) disse feltene i recipe:
+- content_depth: lean | balanced | rich
+- storytelling_mode: minimal | editorial | documentary | conversion
+- visual_proof_level: low | medium | high
+- rhythm_strategy: calm | varied | high_contrast
+- compression_policy: preserve_detail | simplify | aggressively_summarize
+- creative_direction: fritekst (HØYPRIORITERT instruks fra studioet — følg den nøye)
+
+Regler:
+- "Calm" betyr rolig HIERARKI, ikke tom side. "Tasteful" betyr bedre rytme, ikke svakere identitet. Minimalisme betyr ALDRI mindre innhold.
+- compression_policy=preserve_detail (default) → behold konkrete detaljer, navn, scener og sitater fra Client Brain ordrett der det gir mening. Ikke generaliser bort substans.
+- compression_policy=simplify → kortere copy, men samme antall meningsfulle seksjoner og samme substansielle punkter.
+- compression_policy=aggressively_summarize → kun for veldig korte landingssider; krever eksplisitt valg.
+- content_depth=rich → flere seksjoner, lengre body, flere cards/punkter, flere konkrete eksempler. Bruk all relevant Client Brain-data.
+- content_depth=balanced → standard moderne nettside.
+- content_depth=lean → strammere, men aldri på bekostning av flagship_story, services, trust_points, partners eller faq.
+- storytelling_mode=documentary → prioriter ekte scener, aktiviteter, mennesker, bilder og øyeblikk. Bruk representative_scene og media_notes aktivt. Skriv konkret, ikke abstrakt.
+- storytelling_mode=editorial → magasinaktig rytme med tydelige eyebrows, sitater, varierte layouter.
+- storytelling_mode=conversion → mer direkte CTA-rytme, men behold trust og substans.
+- storytelling_mode=minimal → strammere copy, men samme antall meningsfulle seksjoner.
+- visual_proof_level=high → bruk media_notes aktivt; spre bilder utover siden; foreslå image_url på flere seksjoner enn bare hero.
+- visual_proof_level=medium → bilde i hero + 1-2 andre relevante seksjoner.
+- visual_proof_level=low → tekst-tungt; bilde kun der det virkelig løfter.
+- rhythm_strategy=varied → varier background_style (default/muted/mint/dark/image), layout_style og seksjonstyper. ALDRI white/card/white/card hele veien.
+- rhythm_strategy=calm → ensartet, rolig rytme — men fortsatt full innholdsdybde.
+- rhythm_strategy=high_contrast → tydelige skifter mellom mørke/lyse/bilde-seksjoner for dramatikk.
+- creative_direction (fritekst): les denne som DIREKTE INSTRUKS fra studioet. Den overstyrer Studio Brain-referanser hvis de motsier hverandre. Den overstyrer ALDRI Client Brain-substans.
+
+Når du velger defaults selv (hvis recipe-feltene er tomme):
+- nonprofit med ekte aktiviteter → rich / documentary / high / varied / preserve_detail
+- lead_generation/kurs → balanced / conversion / medium / varied / preserve_detail
+- food_brand → balanced / editorial / high / varied / preserve_detail
+- portfolio → balanced / editorial / high / varied / preserve_detail
+- ellers → balanced / editorial / medium / varied / preserve_detail`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
