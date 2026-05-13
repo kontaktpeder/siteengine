@@ -878,3 +878,272 @@ function SectionsEditor({
     </Section>
   );
 }
+
+function MediaNotesEditor({ clientId }: { clientId: string }) {
+  const [notes, setNotes] = useState<MediaNote[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [draft, setDraft] = useState({
+    image_url: "",
+    title: "",
+    description: "",
+    emotional_value: "",
+    suggested_usage: "",
+    is_hero_candidate: false,
+  });
+
+  async function reload() {
+    const { notes } = await listMediaNotes({ data: { client_id: clientId } });
+    setNotes(notes);
+  }
+  useEffect(() => {
+    reload().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]);
+
+  async function add() {
+    if (!draft.image_url.trim()) return;
+    setBusy(true);
+    try {
+      await upsertMediaNote({
+        data: {
+          client_id: clientId,
+          image_url: draft.image_url.trim(),
+          title: draft.title || null,
+          description: draft.description || null,
+          emotional_value: draft.emotional_value || null,
+          suggested_usage: draft.suggested_usage || null,
+          is_hero_candidate: draft.is_hero_candidate,
+        },
+      });
+      setDraft({
+        image_url: "",
+        title: "",
+        description: "",
+        emotional_value: "",
+        suggested_usage: "",
+        is_hero_candidate: false,
+      });
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function patch(n: MediaNote, p: Partial<MediaNote>) {
+    setBusy(true);
+    try {
+      await upsertMediaNote({
+        data: {
+          id: n.id,
+          client_id: clientId,
+          image_url: p.image_url ?? n.image_url,
+          title: p.title !== undefined ? p.title : n.title,
+          description: p.description !== undefined ? p.description : n.description,
+          emotional_value:
+            p.emotional_value !== undefined ? p.emotional_value : n.emotional_value,
+          suggested_usage:
+            p.suggested_usage !== undefined ? p.suggested_usage : n.suggested_usage,
+          is_hero_candidate:
+            p.is_hero_candidate !== undefined ? p.is_hero_candidate : n.is_hero_candidate,
+        },
+      });
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Slette dette bildenotatet?")) return;
+    setBusy(true);
+    try {
+      await deleteMediaNote({ data: { id } });
+      await reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section title="Media notes — bilde-kontekst for AI">
+      <p className="text-sm text-muted-foreground">
+        Lim inn bilde-URL-er og fortell AI litt om hvert bilde. AI bruker dette
+        til å foreslå hero-bilde og hvor bilder passer i seksjonene. Ingen
+        opplasting — bare metadata.
+      </p>
+
+      <div className="mt-4 rounded-xl border border-border bg-muted/20 p-4">
+        <div className="grid gap-3">
+          <Field label="Bilde-URL" hint="Full URL til bildet (https://…)">
+            <input
+              className={inputCls}
+              value={draft.image_url}
+              onChange={(e) => setDraft({ ...draft, image_url: e.target.value })}
+              placeholder="https://…"
+            />
+          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Tittel">
+              <input
+                className={inputCls}
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              />
+            </Field>
+            <Field label="Følelsesverdi" hint="Hva formidler bildet emosjonelt?">
+              <input
+                className={inputCls}
+                value={draft.emotional_value}
+                onChange={(e) => setDraft({ ...draft, emotional_value: e.target.value })}
+              />
+            </Field>
+          </div>
+          <Field label="Beskrivelse" hint="Hva ser man på bildet?">
+            <textarea
+              rows={2}
+              className={inputCls}
+              value={draft.description}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+            />
+          </Field>
+          <Field
+            label="Foreslått bruk"
+            hint="Hvor i sidestrukturen passer bildet? F.eks. «hero», «mission», «aktiviteter»."
+          >
+            <input
+              className={inputCls}
+              value={draft.suggested_usage}
+              onChange={(e) => setDraft({ ...draft, suggested_usage: e.target.value })}
+            />
+          </Field>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.is_hero_candidate}
+              onChange={(e) =>
+                setDraft({ ...draft, is_hero_candidate: e.target.checked })
+              }
+            />
+            Hero-kandidat
+          </label>
+          <div>
+            <button
+              onClick={add}
+              disabled={busy || !draft.image_url.trim()}
+              className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {busy ? "Lagrer…" : "+ Legg til bildenotat"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4">
+        {notes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen bildenotater enda.</p>
+        ) : (
+          notes.map((n) => (
+            <div
+              key={n.id}
+              className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-[120px_1fr]"
+            >
+              <a href={n.image_url} target="_blank" rel="noreferrer" className="block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={n.image_url}
+                  alt={n.title ?? ""}
+                  className="aspect-[4/3] w-full rounded-md object-cover"
+                />
+              </a>
+              <div className="grid gap-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Field label="Tittel">
+                    <input
+                      className={inputCls}
+                      value={n.title ?? ""}
+                      onChange={(e) =>
+                        setNotes((ns) =>
+                          ns.map((x) =>
+                            x.id === n.id ? { ...x, title: e.target.value } : x,
+                          ),
+                        )
+                      }
+                      onBlur={(e) => patch(n, { title: e.target.value || null })}
+                    />
+                  </Field>
+                  <Field label="Følelsesverdi">
+                    <input
+                      className={inputCls}
+                      value={n.emotional_value ?? ""}
+                      onChange={(e) =>
+                        setNotes((ns) =>
+                          ns.map((x) =>
+                            x.id === n.id
+                              ? { ...x, emotional_value: e.target.value }
+                              : x,
+                          ),
+                        )
+                      }
+                      onBlur={(e) =>
+                        patch(n, { emotional_value: e.target.value || null })
+                      }
+                    />
+                  </Field>
+                </div>
+                <Field label="Beskrivelse">
+                  <textarea
+                    rows={2}
+                    className={inputCls}
+                    value={n.description ?? ""}
+                    onChange={(e) =>
+                      setNotes((ns) =>
+                        ns.map((x) =>
+                          x.id === n.id ? { ...x, description: e.target.value } : x,
+                        ),
+                      )
+                    }
+                    onBlur={(e) => patch(n, { description: e.target.value || null })}
+                  />
+                </Field>
+                <Field label="Foreslått bruk">
+                  <input
+                    className={inputCls}
+                    value={n.suggested_usage ?? ""}
+                    onChange={(e) =>
+                      setNotes((ns) =>
+                        ns.map((x) =>
+                          x.id === n.id
+                            ? { ...x, suggested_usage: e.target.value }
+                            : x,
+                        ),
+                      )
+                    }
+                    onBlur={(e) => patch(n, { suggested_usage: e.target.value || null })}
+                  />
+                </Field>
+                <div className="flex items-center justify-between">
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={n.is_hero_candidate}
+                      onChange={(e) =>
+                        patch(n, { is_hero_candidate: e.target.checked })
+                      }
+                    />
+                    Hero-kandidat
+                  </label>
+                  <button
+                    onClick={() => remove(n.id)}
+                    className="rounded border border-destructive/40 px-3 py-1 text-xs text-destructive hover:bg-destructive/10"
+                  >
+                    Slett
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Section>
+  );
+}
