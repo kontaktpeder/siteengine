@@ -636,6 +636,8 @@ function StudioEditor() {
               </Field>
             </div>
           </Section>
+
+          <MediaNotesEditor clientId={c.id} />
         </>
       )}
 
