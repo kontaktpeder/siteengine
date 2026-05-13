@@ -233,6 +233,7 @@ export async function generateAiSuggestion(input: {
   brain: Record<string, unknown>;
   recipe: Record<string, unknown> | null;
   sections: unknown[];
+  media_notes?: unknown[];
 }): Promise<AiSuggestion> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
