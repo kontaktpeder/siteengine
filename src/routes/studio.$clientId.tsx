@@ -24,6 +24,8 @@ type Bundle = {
   recipe: SiteRecipe | null;
   page: { id: string; slug: string; title: string } | null;
   sections: PageSection[];
+  adminAvailable?: boolean;
+  message?: string | null;
 };
 
 const inputCls =
@@ -123,6 +125,22 @@ function StudioEditor() {
   const c = data.client;
   const b = data.brain;
   const r = data.recipe;
+
+  if (data.adminAvailable === false) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-10 md:px-10">
+        <Link to="/studio" className="text-sm text-muted-foreground hover:text-foreground">
+          ← Klienter
+        </Link>
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
+          <h1 className="text-2xl">Studio utilgjengelig</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {data.message ?? "Studio admin krever servertilgang som ikke er tilgjengelig akkurat nå."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const [client, setClient] = useState({
     name: c?.name ?? "",

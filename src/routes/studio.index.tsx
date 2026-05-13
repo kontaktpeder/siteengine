@@ -15,8 +15,14 @@ type ClientRow = {
   site_type?: string | null;
 };
 
+type StudioIndexLoaderData = {
+  clients: ClientRow[];
+  adminAvailable: boolean;
+  message: string | null;
+};
+
 function StudioIndex() {
-  const clients = Route.useLoaderData() as ClientRow[];
+  const { clients, adminAvailable, message } = Route.useLoaderData() as StudioIndexLoaderData;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -60,13 +66,14 @@ function StudioIndex() {
         <div className="flex gap-2">
           <button
             onClick={() => setCreating((v) => !v)}
+            disabled={!adminAvailable}
             className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
           >
             {creating ? "Avbryt" : "Ny klient"}
           </button>
           <button
             onClick={handleSeed}
-            disabled={busy}
+            disabled={busy || !adminAvailable}
             className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
           >
             {busy ? "Jobber…" : "Seed Foreningen Opplev"}
@@ -74,7 +81,13 @@ function StudioIndex() {
         </div>
       </div>
 
-      {creating && (
+      {!adminAvailable && message ? (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm text-muted-foreground">
+          {message}
+        </div>
+      ) : null}
+
+      {creating && adminAvailable && (
         <form
           onSubmit={handleCreate}
           className="mt-6 grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-[1fr_1fr_auto]"
