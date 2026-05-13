@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  applyBrainSuggestion,
+  applyAiSuggestion,
+  generateAiBrainSuggestion,
   getClientBundle,
   saveHomePageSections,
   upsertBrain,
@@ -9,11 +10,10 @@ import {
   upsertRecipe,
 } from "@/lib/admin.functions";
 import {
-  suggestFromBrain,
   SUPPORTED_MODULE_TYPES,
-  type BrainSuggestionPreview,
   type BrainSuggestionSection,
 } from "@/lib/suggest-from-brain";
+import type { AiSuggestion } from "@/lib/ai-suggestion.server";
 import type {
   Client,
   ClientBrain,
@@ -129,7 +129,7 @@ function StudioEditor() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("brain");
-  const [suggestion, setSuggestion] = useState<BrainSuggestionPreview | null>(null);
+  const [suggestion, setSuggestion] = useState<AiSuggestion | null>(null);
 
   const c = data.client;
   const b = data.brain;
@@ -277,33 +277,46 @@ function StudioEditor() {
     { id: "client", label: "Klient (avansert)" },
   ];
 
-  function handleGenerate() {
-    const preview = suggestFromBrain({
-      ...brain,
-      audience: parseJson(brain.audience),
-      brand_keywords: parseJson(brain.brand_keywords),
-      tone_keywords: parseJson(brain.tone_keywords),
-      trust_points: parseJson(brain.trust_points),
-      services: parseJson(brain.services),
-      partners: parseJson(brain.partners),
-      faq: parseJson(brain.faq),
-    });
-    setSuggestion(preview);
+  async function handleGenerate() {
+    setBusy(true);
     setMsg(null);
+    try {
+      const brain_draft = {
+        ...brain,
+        audience: parseJson(brain.audience),
+        brand_keywords: parseJson(brain.brand_keywords),
+        tone_keywords: parseJson(brain.tone_keywords),
+        trust_points: parseJson(brain.trust_points),
+        services: parseJson(brain.services),
+        partners: parseJson(brain.partners),
+        faq: parseJson(brain.faq),
+      };
+      const result = await generateAiBrainSuggestion({
+        data: { client_id: c!.id, brain_draft },
+      });
+      setSuggestion(result as AiSuggestion);
+      if ((result as AiSuggestion).source === "fallback") {
+        setMsg("AI utilgjengelig — viser heuristisk forslag.");
+      }
+    } catch (err) {
+      setMsg(`Feil: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleApplySuggestion() {
     if (!suggestion) return;
     if (
       !confirm(
-        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe og klientens theme. Fortsette?",
+        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe, klientens theme og forsidens metadata. Fortsette?",
       )
     )
       return;
     setBusy(true);
     setMsg(null);
     try {
-      await applyBrainSuggestion({
+      await applyAiSuggestion({
         data: { client_id: c!.id, suggestion },
       });
       setSuggestion(null);
@@ -428,16 +441,17 @@ function StudioEditor() {
         <>
           <Section title="Generer forslag fra Client Brain">
             <p className="text-sm text-muted-foreground">
-              Lag et forslag basert på det du har fylt inn under (lokal state — du
-              trenger ikke lagre Brain først). «Bruk forslag» erstatter alle
-              seksjoner på forsiden, oppdaterer Site Recipe og klientens theme.
+              AI analyserer Brain-en din og foreslår theme, recipe, forside-metadata
+              og seksjoner. Du ser først en preview — ingenting lagres før du
+              trykker «Bruk forslag».
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={handleGenerate}
-                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+                disabled={busy}
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
-                Generer forslag
+                {busy && !suggestion ? "Genererer…" : "Generer med AI"}
               </button>
               {suggestion ? (
                 <>
@@ -460,15 +474,27 @@ function StudioEditor() {
             {suggestion ? (
               <div className="mt-5 grid gap-3 rounded-xl border border-border bg-muted/30 p-5 text-sm">
                 <div className="grid gap-1 sm:grid-cols-2">
-                  <div><span className="text-muted-foreground">Arketype:</span> {suggestion.archetype}</div>
-                  <div><span className="text-muted-foreground">Site type:</span> {suggestion.site_type}</div>
-                  <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.primary_intent}</div>
-                  <div><span className="text-muted-foreground">Design direction:</span> {suggestion.design_direction}</div>
+                  <div><span className="text-muted-foreground">Kilde:</span> {suggestion.source}</div>
+                  <div><span className="text-muted-foreground">Site type:</span> {suggestion.recipe.site_type}</div>
+                  <div><span className="text-muted-foreground">Primary intent:</span> {suggestion.recipe.primary_intent}</div>
+                  <div><span className="text-muted-foreground">Design direction:</span> {suggestion.recipe.design_direction}</div>
                 </div>
+                {suggestion.warnings?.length ? (
+                  <div className="rounded-md bg-amber-100/40 p-2 text-xs text-amber-900 dark:bg-amber-900/20 dark:text-amber-200">
+                    {suggestion.warnings.join(" · ")}
+                  </div>
+                ) : null}
+                {suggestion.home_page?.meta_title || suggestion.home_page?.meta_description ? (
+                  <div className="rounded-md border border-border bg-background p-3">
+                    <div className="text-xs uppercase text-muted-foreground">SEO</div>
+                    <div className="mt-1 font-medium">{suggestion.home_page.meta_title}</div>
+                    <div className="text-xs text-muted-foreground">{suggestion.home_page.meta_description}</div>
+                  </div>
+                ) : null}
                 <div>
                   <div className="mb-1 text-muted-foreground">Moduler ({suggestion.sections.length}):</div>
                   <ol className="list-decimal pl-5">
-                    {suggestion.sections.map((s, i) => (
+                    {suggestion.sections.map((s: BrainSuggestionSection, i: number) => (
                       <li key={i}>
                         <span className="font-medium">{s.module_type}</span>
                         <span className="text-muted-foreground"> · {s.variant}</span>
@@ -478,12 +504,13 @@ function StudioEditor() {
                   </ol>
                 </div>
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-muted-foreground">Se theme/recipe JSON</summary>
-                  <pre className="mt-2 overflow-x-auto rounded-lg bg-background p-3 text-xs">{JSON.stringify({ theme: suggestion.theme, variant_presets: suggestion.variant_presets, navigation: suggestion.navigation, footer: suggestion.footer }, null, 2)}</pre>
+                  <summary className="cursor-pointer text-xs text-muted-foreground">Se full JSON</summary>
+                  <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-background p-3 text-xs">{JSON.stringify(suggestion, null, 2)}</pre>
                 </details>
               </div>
             ) : null}
           </Section>
+
 
           <Section title="Kjerne">
             <div className="grid gap-4">
