@@ -1,0 +1,15 @@
+INSERT INTO public.studio_design_references (name, reference_type, status, rank, what_works, visual_principles, conversion_principles, seo_principles, component_patterns, tone_patterns) VALUES
+('Foreningen Opplev (referanse)', 'nonprofit', 'approved', 90,
+ 'Roligt, varmt og menneskelig. Tydelig misjon i hero, trust strip med konkrete tall, mission-seksjon som forklarer hvorfor før hva.',
+ 'Mye luft, myke farger, stort typografi-display. Bilder av mennesker, ikke abstrakter.',
+ 'CTA er invitasjon, ikke press. Sekundær CTA for de som vil lese mer. Lavterskel kontaktflate.',
+ 'H1 reflekterer misjon i klartekst. Meta description handler om hvem det er for.',
+ 'hero (editorial) -> trust_strip -> mission -> activities -> partners -> contact_cta',
+ 'Varm, inkluderende, ikke offentlig. Snakker direkte til leseren som et medmenneske.'),
+('KursKrageroe (referanse)', 'lead_generation', 'approved', 90,
+ 'Konvertering uten stoey. Hero med klart loefte og umiddelbar CTA. Sosiale bevis hoeyt. FAQ for aa fjerne tvil foer kontakt.',
+ 'Strammere rytme, hoeyere kontrast paa CTA. Bilder viser resultatet/opplevelsen.',
+ 'Primaer CTA over fold. Trust-elementer rett under hero. FAQ rett foer siste CTA.',
+ 'H1 inneholder konkret verdi. Meta description nevner format og maalgruppe.',
+ 'hero (split) -> trust_strip -> services_grid -> proof -> faq -> contact_cta',
+ 'Direkte, konkret, tydelig. Ingen luftige loefter.');
