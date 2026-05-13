@@ -32,7 +32,7 @@ export const getClientBundle = createServerFn({ method: "GET" })
     const home =
       pages?.find((p) => p.slug === "/" || p.slug === "home") ?? pages?.[0] ?? null;
 
-    let sections: unknown[] = [];
+    let sections: Record<string, unknown>[] = [];
     if (home) {
       const { data: sec } = await supabaseAdmin
         .from("page_sections")
