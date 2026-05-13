@@ -180,40 +180,52 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          description: string | null
           email: string | null
+          favicon_url: string | null
           id: string
+          logo_url: string | null
           name: string
           organization_number: string | null
           phone: string | null
           primary_domain: string | null
           slug: string
           status: string
+          theme: Json
           updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
+          favicon_url?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           organization_number?: string | null
           phone?: string | null
           primary_domain?: string | null
           slug: string
           status?: string
+          theme?: Json
           updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string
+          description?: string | null
           email?: string | null
+          favicon_url?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           organization_number?: string | null
           phone?: string | null
           primary_domain?: string | null
           slug?: string
           status?: string
+          theme?: Json
           updated_at?: string
         }
         Relationships: []
@@ -308,12 +320,18 @@ export type Database = {
       }
       page_sections: {
         Row: {
+          anchor_id: string | null
+          background_style: string | null
           body: string | null
           content: Json
           created_at: string
+          cta_href: string | null
+          cta_label: string | null
+          eyebrow: string | null
           id: string
           image_url: string | null
           is_visible: boolean
+          layout_style: string | null
           module_type: string
           page_id: string
           settings: Json
@@ -324,12 +342,18 @@ export type Database = {
           variant: string
         }
         Insert: {
+          anchor_id?: string | null
+          background_style?: string | null
           body?: string | null
           content?: Json
           created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          eyebrow?: string | null
           id?: string
           image_url?: string | null
           is_visible?: boolean
+          layout_style?: string | null
           module_type: string
           page_id: string
           settings?: Json
@@ -340,12 +364,18 @@ export type Database = {
           variant?: string
         }
         Update: {
+          anchor_id?: string | null
+          background_style?: string | null
           body?: string | null
           content?: Json
           created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          eyebrow?: string | null
           id?: string
           image_url?: string | null
           is_visible?: boolean
+          layout_style?: string | null
           module_type?: string
           page_id?: string
           settings?: Json
@@ -428,10 +458,14 @@ export type Database = {
           footer: Json
           id: string
           layout_preferences: Json
+          module_strategy: Json
           navigation: Json
+          primary_intent: string | null
           recipe_type: string
+          site_type: string
           typography: Json
           updated_at: string
+          variant_presets: Json
         }
         Insert: {
           client_id: string
@@ -442,10 +476,14 @@ export type Database = {
           footer?: Json
           id?: string
           layout_preferences?: Json
+          module_strategy?: Json
           navigation?: Json
+          primary_intent?: string | null
           recipe_type?: string
+          site_type?: string
           typography?: Json
           updated_at?: string
+          variant_presets?: Json
         }
         Update: {
           client_id?: string
@@ -456,10 +494,14 @@ export type Database = {
           footer?: Json
           id?: string
           layout_preferences?: Json
+          module_strategy?: Json
           navigation?: Json
+          primary_intent?: string | null
           recipe_type?: string
+          site_type?: string
           typography?: Json
           updated_at?: string
+          variant_presets?: Json
         }
         Relationships: [
           {

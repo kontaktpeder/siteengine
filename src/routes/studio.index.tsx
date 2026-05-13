@@ -7,8 +7,16 @@ export const Route = createFileRoute("/studio/")({
   component: StudioIndex,
 });
 
+type ClientRow = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  site_type?: string | null;
+};
+
 function StudioIndex() {
-  const clients = Route.useLoaderData();
+  const clients = Route.useLoaderData() as ClientRow[];
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -44,7 +52,9 @@ function StudioIndex() {
     <div className="mx-auto w-full max-w-5xl px-6 py-12 md:px-10">
       <div className="flex items-end justify-between">
         <div>
-          <div className="text-sm uppercase tracking-wider text-muted-foreground">Studio P. A. Halvorsen</div>
+          <div className="text-sm uppercase tracking-wider text-muted-foreground">
+            Studio P. A. Halvorsen
+          </div>
           <h1 className="mt-2 text-4xl">Klienter</h1>
         </div>
         <div className="flex gap-2">
@@ -65,7 +75,10 @@ function StudioIndex() {
       </div>
 
       {creating && (
-        <form onSubmit={handleCreate} className="mt-6 grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-[1fr_1fr_auto]">
+        <form
+          onSubmit={handleCreate}
+          className="mt-6 grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-[1fr_1fr_auto]"
+        >
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -94,7 +107,7 @@ function StudioIndex() {
             Ingen klienter ennå. Trykk «Seed Foreningen Opplev» for å komme i gang.
           </div>
         ) : (
-          clients.map((c: { id: string; name: string; slug: string; status: string }) => (
+          clients.map((c) => (
             <Link
               key={c.id}
               to="/studio/$clientId"
@@ -103,7 +116,14 @@ function StudioIndex() {
             >
               <div>
                 <div className="text-lg">{c.name}</div>
-                <div className="text-sm text-muted-foreground">/{c.slug}</div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>/{c.slug}</span>
+                  {c.site_type ? (
+                    <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+                      {c.site_type}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-medium ${

@@ -1,4 +1,4 @@
-import type { SiteData } from "@/lib/site-types";
+import type { SiteData, ThemeTokens } from "@/lib/site-types";
 import { renderModule } from "./modules";
 
 interface NavItem {
@@ -6,14 +6,36 @@ interface NavItem {
   href: string;
 }
 
+function themeToCssVars(theme: ThemeTokens | undefined | null): React.CSSProperties {
+  if (!theme) return {};
+  const vars: Record<string, string> = {};
+  if (theme.primaryColor) vars["--primary"] = theme.primaryColor;
+  if (theme.backgroundColor) vars["--background"] = theme.backgroundColor;
+  if (theme.surfaceColor) vars["--card"] = theme.surfaceColor;
+  if (theme.textColor) vars["--foreground"] = theme.textColor;
+  if (theme.mutedColor) vars["--muted-foreground"] = theme.mutedColor;
+  if (theme.borderColor) vars["--border"] = theme.borderColor;
+  if (theme.radius) vars["--radius"] = theme.radius;
+  return vars as React.CSSProperties;
+}
+
 export function SiteShell({ data }: { data: SiteData }) {
   const recipe = data.recipe;
   const nav = (Array.isArray(recipe?.navigation) ? recipe?.navigation : []) as unknown as NavItem[];
   const footer = (recipe?.footer ?? {}) as unknown as { tagline?: string; email?: string };
   const brain = data.brain;
+  const theme = (data.client.theme ?? {}) as ThemeTokens;
+  const style = themeToCssVars(theme);
+  const fontClass =
+    theme.fontStyle === "sans"
+      ? "[&_h1]:font-sans [&_h2]:font-sans [&_h3]:font-sans [&_h4]:font-sans"
+      : "";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      style={style}
+      className={`min-h-screen bg-background text-foreground ${fontClass}`}
+    >
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 md:px-10">
           <a href="/" className="font-display text-xl tracking-tight">
