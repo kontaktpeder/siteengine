@@ -16,7 +16,13 @@ function getPublicClient() {
   });
 }
 
-const supabaseAdmin = getPublicClient();
+let _client: ReturnType<typeof getPublicClient> | undefined;
+const supabaseAdmin = new Proxy({} as ReturnType<typeof getPublicClient>, {
+  get(_, prop, receiver) {
+    if (!_client) _client = getPublicClient();
+    return Reflect.get(_client, prop, receiver);
+  },
+});
 
 /**
  * Resolve the site to render. For v1: by slug param if provided, otherwise
