@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudioIndexRouteImport } from './routes/studio.index'
+import { Route as StudioBrainRouteImport } from './routes/studio.brain'
 import { Route as StudioClientIdRouteImport } from './routes/studio.$clientId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const StudioIndexRoute = StudioIndexRouteImport.update({
   path: '/studio/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudioBrainRoute = StudioBrainRouteImport.update({
+  id: '/studio/brain',
+  path: '/studio/brain',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudioClientIdRoute = StudioClientIdRouteImport.update({
   id: '/studio/$clientId',
   path: '/studio/$clientId',
@@ -32,30 +38,34 @@ const StudioClientIdRoute = StudioClientIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/studio/$clientId': typeof StudioClientIdRoute
+  '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/studio/$clientId': typeof StudioClientIdRoute
+  '/studio/brain': typeof StudioBrainRoute
   '/studio': typeof StudioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/studio/$clientId': typeof StudioClientIdRoute
+  '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/studio/$clientId' | '/studio/'
+  fullPaths: '/' | '/studio/$clientId' | '/studio/brain' | '/studio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/studio/$clientId' | '/studio'
-  id: '__root__' | '/' | '/studio/$clientId' | '/studio/'
+  to: '/' | '/studio/$clientId' | '/studio/brain' | '/studio'
+  id: '__root__' | '/' | '/studio/$clientId' | '/studio/brain' | '/studio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   StudioClientIdRoute: typeof StudioClientIdRoute
+  StudioBrainRoute: typeof StudioBrainRoute
   StudioIndexRoute: typeof StudioIndexRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studio/brain': {
+      id: '/studio/brain'
+      path: '/studio/brain'
+      fullPath: '/studio/brain'
+      preLoaderRoute: typeof StudioBrainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/studio/$clientId': {
       id: '/studio/$clientId'
       path: '/studio/$clientId'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   StudioClientIdRoute: StudioClientIdRoute,
+  StudioBrainRoute: StudioBrainRoute,
   StudioIndexRoute: StudioIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -515,6 +515,29 @@ function StudioEditor() {
                     ))}
                   </ol>
                 </div>
+                {(() => {
+                  const refs = (suggestion as unknown as { studio_references_used?: { id: string; name: string; reference_type: string; rank: number; what_works: string | null }[] }).studio_references_used ?? [];
+                  if (!refs.length) return null;
+                  return (
+                    <div className="rounded-md border border-border bg-background p-3">
+                      <div className="text-xs uppercase text-muted-foreground">Studio Brain brukt ({refs.length})</div>
+                      <ul className="mt-2 space-y-2">
+                        {refs.map((r) => (
+                          <li key={r.id} className="text-xs">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium">{r.name}</span>
+                              <span className="rounded-full bg-muted px-2 py-0.5">{r.reference_type}</span>
+                              <span className="text-muted-foreground">rank {r.rank}</span>
+                            </div>
+                            {r.what_works && (
+                              <div className="mt-1 line-clamp-2 text-muted-foreground">{r.what_works}</div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-xs text-muted-foreground">Se full JSON</summary>
                   <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-background p-3 text-xs">{JSON.stringify(suggestion, null, 2)}</pre>

@@ -64,6 +64,12 @@ function StudioIndex() {
           <h1 className="mt-2 text-4xl">Klienter</h1>
         </div>
         <div className="flex gap-2">
+          <Link
+            to="/studio/brain"
+            className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
+          >
+            Studio Brain
+          </Link>
           <button
             onClick={() => setCreating((v) => !v)}
             disabled={!adminAvailable}
