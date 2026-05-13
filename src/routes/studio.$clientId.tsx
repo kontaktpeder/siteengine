@@ -1,11 +1,19 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
+  applyBrainSuggestion,
   getClientBundle,
+  saveHomePageSections,
   upsertBrain,
   upsertClient,
   upsertRecipe,
 } from "@/lib/admin.functions";
+import {
+  suggestFromBrain,
+  SUPPORTED_MODULE_TYPES,
+  type BrainSuggestionPreview,
+  type BrainSuggestionSection,
+} from "@/lib/suggest-from-brain";
 import type {
   Client,
   ClientBrain,
@@ -120,7 +128,8 @@ function StudioEditor() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("client");
+  const [tab, setTab] = useState<Tab>("brain");
+  const [suggestion, setSuggestion] = useState<BrainSuggestionPreview | null>(null);
 
   const c = data.client;
   const b = data.brain;
@@ -262,11 +271,50 @@ function StudioEditor() {
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "client", label: "Klient" },
     { id: "brain", label: "Client Brain" },
-    { id: "recipe", label: "Site Recipe" },
     { id: "sections", label: "Sections" },
+    { id: "recipe", label: "Site Recipe (avansert)" },
+    { id: "client", label: "Klient (avansert)" },
   ];
+
+  function handleGenerate() {
+    const preview = suggestFromBrain({
+      ...brain,
+      audience: parseJson(brain.audience),
+      brand_keywords: parseJson(brain.brand_keywords),
+      tone_keywords: parseJson(brain.tone_keywords),
+      trust_points: parseJson(brain.trust_points),
+      services: parseJson(brain.services),
+      partners: parseJson(brain.partners),
+      faq: parseJson(brain.faq),
+    });
+    setSuggestion(preview);
+    setMsg(null);
+  }
+
+  async function handleApplySuggestion() {
+    if (!suggestion) return;
+    if (
+      !confirm(
+        "Dette erstatter alle seksjoner på forsiden, oppdaterer Site Recipe og klientens theme. Fortsette?",
+      )
+    )
+      return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await applyBrainSuggestion({
+        data: { client_id: c!.id, suggestion },
+      });
+      setSuggestion(null);
+      setMsg("Forslag tatt i bruk.");
+      router.invalidate();
+    } catch (err) {
+      setMsg(`Feil: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-10 md:px-10">
