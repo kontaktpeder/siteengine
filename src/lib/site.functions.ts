@@ -1,6 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import type { SiteData } from "./site-types";
+
+function getPublicClient() {
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ??
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase URL or publishable key is not configured");
+  }
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+let _client: ReturnType<typeof getPublicClient> | undefined;
+const supabaseAdmin = new Proxy({} as ReturnType<typeof getPublicClient>, {
+  get(_, prop, receiver) {
+    if (!_client) _client = getPublicClient();
+    return Reflect.get(_client, prop, receiver);
+  },
+});
 
 /**
  * Resolve the site to render. For v1: by slug param if provided, otherwise
