@@ -94,7 +94,7 @@ function StudioIndex() {
             Ingen klienter ennå. Trykk «Seed Foreningen Opplev» for å komme i gang.
           </div>
         ) : (
-          clients.map((c) => (
+          clients.map((c: { id: string; name: string; slug: string; status: string }) => (
             <Link
               key={c.id}
               to="/studio/$clientId"
