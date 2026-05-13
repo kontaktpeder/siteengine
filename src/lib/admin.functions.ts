@@ -633,6 +633,8 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       "tone_keywords", "short_description", "long_description", "mission", "vision",
       "problem_statement", "solution_statement", "trust_points", "services", "partners",
       "faq", "cta_primary_label", "cta_primary_href", "cta_secondary_label", "cta_secondary_href",
+      "flagship_story", "emotional_trigger", "anti_brand", "memorable_takeaway",
+      "representative_scene", "desired_feelings",
     ];
     const brainPatch: Record<string, unknown> = { client_id };
     for (const k of brainAllowed) {
