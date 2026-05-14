@@ -345,6 +345,13 @@ function MissionModule({ section, brain, site }: ModuleProps) {
         <div className={proseDepthClass(depth)}>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          {section.subtitle ? (
+            <p
+              className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"}`}
+            >
+              {section.subtitle}
+            </p>
+          ) : null}
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {[
@@ -377,6 +384,13 @@ function MissionModule({ section, brain, site }: ModuleProps) {
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          {section.subtitle ? (
+            <p
+              className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"} ${proseDepthClass(depth)}`}
+            >
+              {section.subtitle}
+            </p>
+          ) : null}
           {cta ? (
             <div className="mt-8">
               <PrimaryButton href={cta.href}>{cta.label}</PrimaryButton>

@@ -184,6 +184,7 @@ RENDERER-AWARE (obligatorisk — disse feltene har DIREKTE visuell effekt i UI):
 - page_sections[].background_style: default | muted | mint | dark | image
 - page_sections[].layout_style: centered | split | grid | editorial
 - page_sections[].image_url OG sections[].content.image_url (brukes til bilder der modulen støtter det — hero, mission, services_grid, partners, proof)
+- mission: page_sections[].subtitle vises under overskriften som «story lead» / hovedhistorie når satt (bruk til flagship_story eller utdyping etter hero)
 - page_sections[].settings.content_depth: shallow | standard | deep (styrer prose-bredde og vertikal padding per seksjon)
 - recipe.storytelling_mode (ROOT — éneste sannhet): minimal | editorial | documentary | conversion. Renderer mapper dette til vertikal rytme og bildekomposisjon. recipe.module_strategy.storytelling_mode er DEPRECATED — ikke skriv den lenger.
 
@@ -223,6 +224,39 @@ D) NONPROFIT / DOCUMENTARY (prioritet)
 
 E) KONFLIKTLOSNING
 - Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.
+
+EDITORIAL STRUCTURE (prioritet + seksjonsformer — overstyrer "flere kort"):
+
+A) RICH ≠ FLERE LIKE CARDS
+- "Rich" betyr mer VARIASJON i seksjonsform, mer KONKRET virkelighet, tydeligere SCENER, og bedre RYTME (veksle default/muted/mint, editorial/split/grid).
+- Unngå tre repetitive "kort-rader" på rad. Kombiner: én historie-/mission-seksjon, én aktivitetsseksjon, én målgruppe/bevis-seksjon, én partner-/FAQ-seksjon.
+- services_grid er for oversikt over tilbud — ikke bruk den som eneste sted for konkrete aktivitetsscener; bruk activities med content.items for håndgripelige eksempler (gokart, ledsager, tegnspråk, synshemmede, osv.).
+
+B) PRIORITERING I LISTER (brain.services, activities.content.items, trust_points)
+- Sorter slik at de VIKTIGSTE punktene kommer først: flaggskip / signatur-opplevelse → konkrete aktiviteter og målgrupper → generelle støttepunkter sist.
+- Bruk flagship_story, representative_scene og memorable_takeaway til å IDENTIFISERE hva som er flaggskip — ikke bare første rad i en tabell.
+
+C) FLAGGSKIP / HOVEDHISTORIE (obligatorisk når flagship_story eller tydelig signatur finnes)
+- Ikke la flaggskipet bare bli ett lite services-kort.
+- Legg kjernebudskap i hero: section.title (kort) + section.subtitle (2–5 setninger, konkret scene der mulig).
+- Rett etter hero: dedikert story — bruk module_type=mission med section.title + section.subtitle (renderer viser subtitle under overskriften) for hovedhistorien når flagship_story er lang eller rik; utdyp med brain.problem_statement / solution_statement / vision i samme seksjon eller i variant "cards".
+- Hero-variant "split" eller "editorial" + content.image_url når media_notes eller representative_scene tilsier det.
+
+D) DOKUMENTARISK OPPBYGGING (nonprofit eller storytelling_mode=documentary)
+- Standard rekkefølge med mindre Brain mangler data for et ledd:
+  1) hero — budskap + scene
+  2) trust_strip — tidlig tillit (hvis trust_points)
+  3) mission — hovedhistorie (section.subtitle + brain-tekst)
+  4) activities — konkrete aktiviteter (3–6 items)
+  5) services_grid — oversikt tilbud (prioritert, ikke dupliser activities)
+  6) proof — hvem det er for (audience)
+  7) partners — samarbeid (hvis partners)
+  8) faq — motforestillinger (hvis faq)
+  9) contact_cta — neste steg
+
+E) GENERISKE VS KONKRETE
+- Plasser generiske formuleringer sist i services; ikke la dem spise plassen til signaturaktiviteter i activities.
+- FAQ skal svare på reelle innvendinger når Brain har materiale — ikke bare generiske one-liners.
 
 RETRY / ENFORCEMENT:
 Hvis brukerens JSON har "mode":"richness_retry", er hovedoppgaven å fjerne alle elementer i "richness_warnings" ved å returnere et helt nytt gyldig svar i samme expected_format. Ikke send delvise oppdateringer eller diff. Bevar tema, struktur og god copy der det ikke bryter med SECTION RICHNESS MINIMA. Alle "richness_warnings" skal være borte i dette svaret.`;
