@@ -657,20 +657,21 @@ function FaqModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- CONTACT CTA ---------- */
 
-function ContactCtaModule({ section, brain }: ModuleProps) {
+function ContactCtaModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
+  const pad = layoutFor(section, site).root;
 
   if (variant === "soft") {
     return (
       <Container
         id={sectionAnchor(section) ?? "kontakt"}
         bg={section.background_style}
-        className="py-20"
+        className={pad}
       >
         <div className="rounded-3xl border border-border bg-card p-10 md:p-14">
           <div className="max-w-2xl">
