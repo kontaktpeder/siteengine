@@ -326,31 +326,40 @@ function TrustStripModule({ section, brain }: ModuleProps) {
 
 /* ---------- MISSION ---------- */
 
-function MissionModule({ section, brain }: ModuleProps) {
+function MissionModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "simple";
   const eyebrow = section.eyebrow ?? section.title ?? "Vårt oppdrag";
   const cta = resolveCta(section, brain);
   const dark = isDarkBg(section.background_style);
+  const depth = getContentDepth(section);
+  const storytelling = getStorytellingMode(site.recipe);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+  const showSideImage =
+    !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
+  const pad = paddingFor(section, site);
 
   if (variant === "cards") {
-    const cards = [
-      brain?.problem_statement && { label: "Problem", body: brain.problem_statement },
-      brain?.solution_statement && { label: "Løsning", body: brain.solution_statement },
-      brain?.vision && { label: "Visjon", body: brain.vision },
-    ].filter(Boolean) as { label: string; body: string }[];
     return (
-      <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className="py-20">
-        <div className="max-w-2xl">
+      <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
+        <div className={proseDepthClass(depth)}>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {cards.map((c, i) => (
-            <div key={i} className="rounded-3xl border border-border bg-card p-7">
-              <div className="text-sm font-semibold text-primary">{c.label}</div>
-              <p className="mt-3 text-foreground">{c.body}</p>
-            </div>
-          ))}
+          {[
+            brain?.problem_statement && { label: "Problem", body: brain.problem_statement },
+            brain?.solution_statement && { label: "Løsning", body: brain.solution_statement },
+            brain?.vision && { label: "Visjon", body: brain.vision },
+          ].filter(Boolean).map((c, i) => {
+            const card = c as { label: string; body: string };
+            return (
+              <div key={i} className="rounded-3xl border border-border bg-card p-7">
+                <div className="text-sm font-semibold text-primary">{card.label}</div>
+                <p className="mt-3 text-foreground">{card.body}</p>
+              </div>
+            );
+          })}
         </div>
         {cta ? (
           <div className="mt-8">
@@ -363,8 +372,8 @@ function MissionModule({ section, brain }: ModuleProps) {
 
   // simple / editorial
   return (
-    <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className="py-20">
-      <div className="grid gap-12 md:grid-cols-2">
+    <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
+      <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
@@ -374,16 +383,35 @@ function MissionModule({ section, brain }: ModuleProps) {
             </div>
           ) : null}
         </div>
-        <div className={`space-y-6 text-lg ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+        {showSideImage ? (
+          <img
+            src={imageUrl!}
+            alt={settings.image_alt ?? section.title ?? ""}
+            className="aspect-[4/5] w-full rounded-3xl object-cover"
+          />
+        ) : (
+          <div className={`space-y-6 ${proseDepthClass(depth)} ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+            {brain?.problem_statement ? <p>{brain.problem_statement}</p> : null}
+            {brain?.solution_statement ? <p>{brain.solution_statement}</p> : null}
+            {brain?.vision ? (
+              <p className={dark ? "text-background" : "text-foreground"}>
+                <span className="font-medium">Visjon:</span> {brain.vision}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </div>
+      {showSideImage ? (
+        <div className={`mt-10 grid gap-6 md:grid-cols-2 ${proseDepthClass(depth)} ${dark ? "text-background/80" : "text-muted-foreground"}`}>
           {brain?.problem_statement ? <p>{brain.problem_statement}</p> : null}
           {brain?.solution_statement ? <p>{brain.solution_statement}</p> : null}
           {brain?.vision ? (
-            <p className={dark ? "text-background" : "text-foreground"}>
+            <p className={`md:col-span-2 ${dark ? "text-background" : "text-foreground"}`}>
               <span className="font-medium">Visjon:</span> {brain.vision}
             </p>
           ) : null}
         </div>
-      </div>
+      ) : null}
     </Container>
   );
 }
