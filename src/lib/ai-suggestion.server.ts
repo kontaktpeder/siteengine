@@ -222,7 +222,10 @@ D) NONPROFIT / DOCUMENTARY (prioritet)
 - Når site_type er nonprofit ELLER storytelling_mode er documentary: prefer "rik organisasjon" fremfor "minimalistisk magasin". Luft og ro = mer whitespace og bedre hierarki — IKKE færre fakta om hva organisasjonen faktisk gjør.
 
 E) KONFLIKTLOSNING
-- Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.`;
+- Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.
+
+RETRY / ENFORCEMENT:
+Hvis brukerens JSON har "mode":"richness_retry", er hovedoppgaven å fjerne alle elementer i "richness_warnings" ved å returnere et helt nytt gyldig svar i samme expected_format. Ikke send delvise oppdateringer eller diff. Bevar tema, struktur og god copy der det ikke bryter med SECTION RICHNESS MINIMA. Alle "richness_warnings" skal være borte i dette svaret.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
