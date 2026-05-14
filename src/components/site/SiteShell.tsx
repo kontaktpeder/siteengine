@@ -137,7 +137,7 @@ export function SiteShell({ data }: { data: SiteData }) {
         </div>
       </header>
 
-      <main>
+      <main data-renderer-v2={import.meta.env.VITE_RENDERER_V2 === "1" ? "1" : undefined}>
         {sections.map((s) => (
           <div key={s.id}>{renderModule({ section: s, brain, site: data })}</div>
         ))}
