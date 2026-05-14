@@ -305,7 +305,7 @@ function HeroModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- TRUST STRIP ---------- */
 
-function TrustStripModule({ section, brain }: ModuleProps) {
+function TrustStripModule({ section, brain, site }: ModuleProps) {
   const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
   return (
