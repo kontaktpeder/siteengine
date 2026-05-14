@@ -286,6 +286,50 @@ function asObj(v: unknown): Record<string, unknown> {
     : {};
 }
 
+function clampEnum(
+  v: unknown,
+  set: ReadonlySet<string>,
+  fallback: string,
+): string {
+  return typeof v === "string" && set.has(v) ? v : fallback;
+}
+
+function clampSectionSettings(
+  settings: Record<string, unknown>,
+  moduleType: string,
+  warnings: string[],
+  index: number,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...settings };
+  // Strip any free-form Tailwind-ish keys we never want from AI
+  for (const banned of ["className", "tailwind", "padding", "spacing"]) {
+    if (banned in out) delete out[banned];
+  }
+  if (out.content_depth !== undefined) {
+    out.content_depth = clampEnum(out.content_depth, VALID_CONTENT_DEPTH_SECTION, "standard");
+  }
+  if (out.sectionDensity !== undefined) {
+    out.sectionDensity = clampEnum(out.sectionDensity, VALID_SECTION_DENSITY_AI, "normal");
+  }
+  if (out.imageScale !== undefined) {
+    out.imageScale = clampEnum(out.imageScale, VALID_IMAGE_SCALE_AI, "medium");
+  }
+  if (out.alignment !== undefined) {
+    out.alignment = clampEnum(out.alignment, VALID_ALIGNMENT_AI, "left");
+  }
+  if (out.visualWeight !== undefined) {
+    let vw = clampEnum(out.visualWeight, VALID_VISUAL_WEIGHT_AI, "standard");
+    if (vw === "hero" && moduleType !== "hero") {
+      warnings.push(
+        `Section #${index} (${moduleType}): visualWeight="hero" er forbeholdt hero-modul — auto-korrigert til "standard".`,
+      );
+      vw = "standard";
+    }
+    out.visualWeight = vw;
+  }
+  return out;
+}
+
 function validateAndCoerce(parsed: unknown): AiSuggestion {
   if (!parsed || typeof parsed !== "object") {
     throw new Error("AI returnerte ikke et objekt");
