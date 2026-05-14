@@ -4,16 +4,16 @@ export type StorytellingMode = "default" | "documentary" | "editorial";
 export type ContentDepth = "shallow" | "standard" | "deep";
 
 export function getStorytellingMode(recipe: SiteRecipe | null): StorytellingMode {
-  // Primary: module_strategy.storytelling_mode (per v2 contract)
-  const strat = (recipe?.module_strategy as Record<string, unknown> | null) ?? null;
-  const fromStrat = strat?.storytelling_mode;
-  if (fromStrat === "documentary" || fromStrat === "editorial" || fromStrat === "default") {
-    return fromStrat;
-  }
-  // Fallback: top-level recipe.storytelling_mode (v3 column, if used)
-  const topLevel = (recipe as unknown as { storytelling_mode?: string } | null)?.storytelling_mode;
-  if (topLevel === "documentary" || topLevel === "editorial") return topLevel;
-  if (topLevel === "minimal") return "default";
+  // Single source of truth: recipe.storytelling_mode (root column).
+  // Recipe values: minimal | editorial | documentary | conversion → mapped to
+  // renderer rhythm modes: default | editorial | documentary.
+  const root = (recipe as unknown as { storytelling_mode?: string } | null)?.storytelling_mode;
+  if (root === "documentary") return "documentary";
+  if (root === "editorial") return "editorial";
+  if (root === "minimal" || root === "conversion") return "default";
+  // Backwards compat (deprecated): module_strategy.storytelling_mode
+  const legacy = (recipe?.module_strategy as Record<string, unknown> | null)?.storytelling_mode;
+  if (legacy === "documentary" || legacy === "editorial") return legacy;
   return "default";
 }
 

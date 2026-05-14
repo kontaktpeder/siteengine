@@ -185,7 +185,7 @@ RENDERER-AWARE (obligatorisk — disse feltene har DIREKTE visuell effekt i UI):
 - page_sections[].layout_style: centered | split | grid | editorial
 - page_sections[].image_url OG sections[].content.image_url (brukes til bilder der modulen støtter det — hero, mission, services_grid, partners, proof)
 - page_sections[].settings.content_depth: shallow | standard | deep (styrer prose-bredde og vertikal padding per seksjon)
-- recipe.module_strategy.storytelling_mode: default | documentary | editorial (styrer global vertikal rytme og bildekomposisjon)
+- recipe.storytelling_mode (ROOT — éneste sannhet): minimal | editorial | documentary | conversion. Renderer mapper dette til vertikal rytme og bildekomposisjon. recipe.module_strategy.storytelling_mode er DEPRECATED — ikke skriv den lenger.
 
 Dette er IKKE direkte koblet til CSS i v2 (visuell effekt = client.theme):
 - color_palette, typography, layout_preferences (kan oppsummeres tekstlig i module_strategy, men ikke forvent at de tegnes)
@@ -194,8 +194,35 @@ Konkrete renderer-regler:
 - Når storytelling_mode=documentary → spre bilder utover siden via content.image_url på hero, mission, services_grid eller proof. Bruk split-layout på hero når media_notes har is_hero_candidate eller representative_scene tilsier det.
 - Når content_depth=deep på en seksjon → forvent større vertikal padding og bredere prose; bruk dette for hero/mission/proof i nonprofit eller editorial sites.
 - Når content_depth=shallow → forvent strammere padding; bruk kun for korte trust_strip / contact_cta-aktige seksjoner.
-- Sett module_strategy.storytelling_mode eksplisitt på recipe-nivå basert på prosjekttype (documentary for nonprofit/portfolio med ekte historier; editorial for food/brand; default ellers).
-- Sett settings.content_depth eksplisitt på hver seksjon — ikke la det være tomt for hero/mission/proof.`;
+- Sett recipe.storytelling_mode eksplisitt basert på prosjekttype (documentary for nonprofit/portfolio med ekte historier; editorial for food/brand; minimal/conversion ellers).
+- Sett settings.content_depth eksplisitt på hver seksjon — ikke la det være tomt for hero/mission/proof.
+
+SECTION RICHNESS MINIMA (obligatorisk — overstyrer "elegant korthet"):
+
+A) INGEN KOLLAPS AV MENINGSINNHOLD
+- Slå ALDRI sammen flere reelle tilbud, aktiviteter, målgrupper eller initiativ fra Client Brain til én generalisert setning eller ett kort "for å rydde opp".
+- Hvis Brain lister f.eks. tegnspråk, ledsagerkjøring, synshemmede, universell utforming, fosterfamilier, gokart osv. som ulike tilbud/punkter, skal leseren fortsatt SE bredden — ikke bare to "representative" eksempler.
+
+B) TELLING MOT BRAIN (hard regel)
+La N_services, N_faq, N_partners, N_trust, N_audience være antall meningsfulle elementer i tilsvarende felt i input Brain (etter normalisering).
+
+Når recipe.content_depth = "rich" ELLER recipe.storytelling_mode = "documentary" ELLER recipe.compression_policy = "preserve_detail" (default):
+- Output brain.services må ha minst min(N_services, 8) elementer — og ALDRI færre enn input med mindre input er tomt. Du kan omskrive tekst, men ikke fjerne distinkte tilbud.
+- Output brain.faq: hvis N_faq >= 4, må output ha minst 4 (gjerne alle opptil 8). Hvis N_faq er 1–3, behold alle.
+- Output brain.partners: hvis N_partners >= 4, minst 4 i output; ellers behold alle.
+- Output brain.trust_points: hvis N_trust >= 3, minst 3 i output; ellers behold alle.
+- Output brain.audience: behold alle distinkte målgrupper fra input — ikke "elegant" trim.
+- activities-seksjon: hvis du inkluderer module_type=activities, fyll content.items med 3–6 konkrete aktiviteter hentet fra Brain (services, raw_notes, activities-beskrivelser) — ikke én generisk "aktiviteter for alle".
+
+C) SERVICES_GRID / ACTIVITIES (fordeling)
+- Hvis N_services > 6: vurder ÉN services_grid (cards fra brain.services) OG/ELLER én activities med items — men du skal fortsatt ikke slette halvparten av tjenestene fra output-brain.
+- "Rich mode" betyr BREDDE: flere kort, flere spørsmål, flere konkrete navn — ikke tynnere magasin.
+
+D) NONPROFIT / DOCUMENTARY (prioritet)
+- Når site_type er nonprofit ELLER storytelling_mode er documentary: prefer "rik organisasjon" fremfor "minimalistisk magasin". Luft og ro = mer whitespace og bedre hierarki — IKKE færre fakta om hva organisasjonen faktisk gjør.
+
+E) KONFLIKTLOSNING
+- Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
@@ -349,6 +376,70 @@ function fallbackSuggestion(brain: Record<string, unknown>): AiSuggestion {
   };
 }
 
+function countMeaningful(v: unknown): number {
+  if (!Array.isArray(v)) return 0;
+  return v.filter((item) => {
+    if (typeof item === "string") return item.trim().length > 0;
+    if (item && typeof item === "object") return Object.keys(item).length > 0;
+    return false;
+  }).length;
+}
+
+function checkRichness(
+  inputBrain: Record<string, unknown>,
+  result: AiSuggestion,
+): string[] {
+  const warnings: string[] = [];
+  const outBrain = result.brain ?? {};
+  const cd = result.recipe.content_depth;
+  const sm = result.recipe.storytelling_mode;
+  const cp = result.recipe.compression_policy;
+  const enforce =
+    cd === "rich" ||
+    sm === "documentary" ||
+    cp === "preserve_detail" ||
+    result.recipe.site_type === "nonprofit";
+  if (!enforce) return warnings;
+
+  const checks: { key: string; min?: number; label: string }[] = [
+    { key: "services", min: 8, label: "tjenester" },
+    { key: "faq", min: 4, label: "FAQ-spørsmål" },
+    { key: "partners", min: 4, label: "partnere" },
+    { key: "trust_points", min: 3, label: "trust points" },
+    { key: "audience", label: "målgrupper" },
+  ];
+
+  for (const c of checks) {
+    const nIn = countMeaningful(inputBrain[c.key]);
+    const nOut = countMeaningful((outBrain as Record<string, unknown>)[c.key]);
+    if (nIn === 0) continue;
+    const required = c.min ? Math.min(nIn, c.min) : nIn;
+    if (nOut < required) {
+      warnings.push(
+        `Richness-guard: ${c.label} kollapset (input=${nIn}, output=${nOut}, krav≥${required}). AI fjernet meningsfullt innhold fra Client Brain.`,
+      );
+    }
+  }
+
+  // activities section: if present, expect 3-6 items when input has material
+  const activitiesSection = result.sections.find((s) => s.module_type === "activities");
+  if (activitiesSection) {
+    const items = (activitiesSection.content as { items?: unknown[] } | undefined)?.items;
+    const nItems = countMeaningful(items);
+    const inputMaterial = Math.max(
+      countMeaningful(inputBrain.services),
+      countMeaningful((inputBrain as Record<string, unknown>).activities),
+    );
+    if (inputMaterial >= 3 && nItems < 3) {
+      warnings.push(
+        `Richness-guard: activities-seksjonen har bare ${nItems} items, men Brain har ${inputMaterial} relevante elementer. Forvent 3–6 konkrete aktiviteter.`,
+      );
+    }
+  }
+
+  return warnings;
+}
+
 export async function generateAiSuggestion(input: {
   client: Record<string, unknown> | null;
   brain: Record<string, unknown>;
@@ -431,7 +522,12 @@ export async function generateAiSuggestion(input: {
       if (!m) throw new Error("Kunne ikke parse JSON fra AI");
       parsed = JSON.parse(m[0]);
     }
-    return validateAndCoerce(parsed);
+    const result = validateAndCoerce(parsed);
+    const guardWarnings = checkRichness(input.brain, result);
+    if (guardWarnings.length) {
+      result.warnings = [...(result.warnings ?? []), ...guardWarnings];
+    }
+    return result;
   } catch (err) {
     console.error("[ai-suggestion] AI call failed, using fallback:", err);
     const fb = fallbackSuggestion(input.brain);
