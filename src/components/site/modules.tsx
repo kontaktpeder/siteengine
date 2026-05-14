@@ -215,10 +215,12 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 
 /* ---------- HERO ---------- */
 
-function HeroModule({ section, brain }: ModuleProps) {
+function HeroModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "centered";
   const layout = (section.layout_style as LayoutStyle) || null;
   const dark = isDarkBg(section.background_style);
+  const storytelling = getStorytellingMode(site.recipe);
+  const depth = getContentDepth(section);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
   const eyebrow = section.eyebrow ?? "Foreningen";
@@ -230,17 +232,28 @@ function HeroModule({ section, brain }: ModuleProps) {
 
   const isSplit = variant === "split" || layout === "split";
   const isCentered = variant === "centered" || layout === "centered";
+  const documentary = storytelling === "documentary";
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+
+  // Hero gets its own padding shape; bump in documentary or deep
+  const padBase =
+    documentary
+      ? "pt-28 pb-24 md:pt-40 md:pb-32"
+      : depth === "deep"
+        ? "pt-28 pb-24 md:pt-36 md:pb-28"
+        : "pt-24 pb-20 md:pt-32 md:pb-28";
 
   return (
     <Container
       id={sectionAnchor(section)}
       bg={section.background_style}
-      className="pt-24 pb-20 md:pt-32 md:pb-28"
+      className={padBase}
     >
       <div
         className={
           isSplit
-            ? "grid items-center gap-12 md:grid-cols-2"
+            ? `grid items-center ${documentary ? "gap-16" : "gap-12"} md:grid-cols-2`
             : isCentered
               ? "mx-auto max-w-3xl text-center"
               : "max-w-3xl"
@@ -248,7 +261,7 @@ function HeroModule({ section, brain }: ModuleProps) {
       >
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h1 className="mt-6 text-5xl leading-[1.05] md:text-7xl">{title}</h1>
+          <h1 className={`mt-6 leading-[1.05] ${documentary ? "text-5xl md:text-8xl" : "text-5xl md:text-7xl"}`}>{title}</h1>
           {subtitle ? (
             <p
               className={`mt-6 max-w-2xl text-lg md:text-xl ${
@@ -267,20 +280,24 @@ function HeroModule({ section, brain }: ModuleProps) {
             </div>
           )}
         </div>
-        {isSplit ? (() => {
-          const content = (section.content ?? {}) as { image_url?: string };
-          const settings = (section.settings ?? {}) as { image_alt?: string };
-          const imageUrl = content.image_url || section.image_url || null;
-          return imageUrl ? (
+        {isSplit ? (
+          imageUrl ? (
             <img
               src={imageUrl}
               alt={settings.image_alt ?? section.title ?? ""}
-              className="aspect-[4/5] w-full rounded-3xl object-cover"
+              className={`w-full rounded-3xl object-cover ${documentary ? "aspect-[4/5] md:min-h-[32rem]" : "aspect-[4/5]"}`}
             />
           ) : (
             <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
-          );
-        })() : null}
+          )
+        ) : null}
+        {!isSplit && imageUrl && documentary ? (
+          <img
+            src={imageUrl}
+            alt={settings.image_alt ?? section.title ?? ""}
+            className="mt-12 aspect-[16/9] w-full rounded-3xl object-cover"
+          />
+        ) : null}
       </div>
     </Container>
   );
