@@ -695,7 +695,7 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
     <Container
       id={sectionAnchor(section) ?? "kontakt"}
       bg={section.background_style}
-      className="py-24"
+      className={pad}
     >
       <div className="rounded-3xl bg-primary p-10 text-primary-foreground md:p-16">
         <div className="max-w-2xl">
