@@ -39,6 +39,11 @@ const VALID_COMPRESSION = new Set([
   "simplify",
   "aggressively_summarize",
 ]);
+const VALID_SECTION_DENSITY_AI = new Set(["compact", "normal", "featured"]);
+const VALID_VISUAL_WEIGHT_AI = new Set(["quiet", "standard", "hero"]);
+const VALID_IMAGE_SCALE_AI = new Set(["small", "medium", "large"]);
+const VALID_ALIGNMENT_AI = new Set(["left", "center", "split"]);
+const VALID_CONTENT_DEPTH_SECTION = new Set(["shallow", "standard", "deep"]);
 
 // JSON-like used in AI suggestion fields so the server-fn serializer accepts the shape.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
