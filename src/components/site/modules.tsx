@@ -618,13 +618,13 @@ function ProofModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- FAQ ---------- */
 
-function FaqModule({ section, brain }: ModuleProps) {
+function FaqModule({ section, brain, site }: ModuleProps) {
   const items = normalizeFaq(brain?.faq);
   if (!items.length) return null;
   const variant = section.variant || "accordion";
   const dark = isDarkBg(section.background_style);
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
         {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
