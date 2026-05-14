@@ -190,18 +190,24 @@ RENDERER-AWARE (obligatorisk — disse feltene har DIREKTE visuell effekt i UI):
 - page_sections[].layout_style: centered | split | grid | editorial
 - page_sections[].image_url OG sections[].content.image_url (brukes til bilder der modulen støtter det — hero, mission, services_grid, partners, proof)
 - mission: page_sections[].subtitle vises under overskriften som «story lead» / hovedhistorie når satt (bruk til flagship_story eller utdyping etter hero)
-- page_sections[].settings.content_depth: shallow | standard | deep (styrer prose-bredde og vertikal padding per seksjon)
+- page_sections[].settings.content_depth: shallow | standard | deep (FALLBACK — fortsatt støttet, men foretrekk de eksplisitte layout-tokens under)
+- page_sections[].settings.sectionDensity: compact | normal | featured (vertikal padding/luft for seksjonen)
+- page_sections[].settings.visualWeight: quiet | standard | hero (typografisk tyngde — KUN hero-modulen får "hero")
+- page_sections[].settings.imageScale: small | medium | large (bilde-dominans i seksjonen — ikke fri høyde)
+- page_sections[].settings.alignment: left | center | split (komposisjon; "split" forutsetter to kolonner i modulen)
 - recipe.storytelling_mode (ROOT — éneste sannhet): minimal | editorial | documentary | conversion. Renderer mapper dette til vertikal rytme og bildekomposisjon. recipe.module_strategy.storytelling_mode er DEPRECATED — ikke skriv den lenger.
 
-Dette er IKKE direkte koblet til CSS i v2 (visuell effekt = client.theme):
-- color_palette, typography, layout_preferences (kan oppsummeres tekstlig i module_strategy, men ikke forvent at de tegnes)
+KONTROLLERT LAYOUT (obligatorisk — ikke improviser Tailwind):
+- Layout, spacing, høyde og grid styres KUN av tokens over (sectionDensity / visualWeight / imageScale / alignment) + module_type + background_style. Ikke skriv frie Tailwind-strenger i content/settings for layout-effekter.
+- Tenk hele forsiden som ÉN scroll. Hierarki: hero størst (sectionDensity="featured", visualWeight="hero", imageScale="large"), mission/story nest størst (sectionDensity="normal" eller "featured", visualWeight="standard"), trust_strip / faq / contact_cta / partners kompaktere (sectionDensity="compact", visualWeight="quiet").
+- "visualWeight":"hero" er FORBEHOLDT module_type="hero". Sett "standard" eller "quiet" på alt annet — ellers blir det auto-korrigert.
+- Sett tokens eksplisitt på hver seksjon — ikke la dem være tomme. Hvis ukjent: bruk "normal" / "standard" / "medium" / "left".
 
 Konkrete renderer-regler:
 - Når storytelling_mode=documentary → spre bilder utover siden via content.image_url på hero, mission, services_grid eller proof. Bruk split-layout på hero når media_notes har is_hero_candidate eller representative_scene tilsier det.
-- Når content_depth=deep på en seksjon → forvent større vertikal padding og bredere prose; bruk dette for hero/mission/proof i nonprofit eller editorial sites.
-- Når content_depth=shallow → forvent strammere padding; bruk kun for korte trust_strip / contact_cta-aktige seksjoner.
+- Når sectionDensity="featured" → forvent større vertikal padding; bruk for hero/mission/proof i nonprofit eller editorial sites.
+- Når sectionDensity="compact" → forvent strammere padding; bruk for trust_strip / faq / contact_cta.
 - Sett recipe.storytelling_mode eksplisitt basert på prosjekttype (documentary for nonprofit/portfolio med ekte historier; editorial for food/brand; minimal/conversion ellers).
-- Sett settings.content_depth eksplisitt på hver seksjon — ikke la det være tomt for hero/mission/proof.
 
 SECTION RICHNESS MINIMA (obligatorisk — overstyrer "elegant korthet"):
 
