@@ -66,7 +66,7 @@ function buildFallbackSections(data: SiteData) {
     body: null,
     image_url: null,
     content: {},
-    settings: {},
+    settings: { content_depth: "standard" },
     is_visible: true,
     created_at: new Date(0).toISOString(),
     updated_at: new Date(0).toISOString(),
@@ -137,7 +137,7 @@ export function SiteShell({ data }: { data: SiteData }) {
         </div>
       </header>
 
-      <main>
+      <main data-renderer-v2={import.meta.env.VITE_RENDERER_V2 === "1" ? "1" : undefined}>
         {sections.map((s) => (
           <div key={s.id}>{renderModule({ section: s, brain, site: data })}</div>
         ))}

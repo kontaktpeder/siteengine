@@ -175,7 +175,27 @@ Når du velger defaults selv (hvis recipe-feltene er tomme):
 - lead_generation/kurs → balanced / conversion / medium / varied / preserve_detail
 - food_brand → balanced / editorial / high / varied / preserve_detail
 - portfolio → balanced / editorial / high / varied / preserve_detail
-- ellers → balanced / editorial / medium / varied / preserve_detail`;
+- ellers → balanced / editorial / medium / varied / preserve_detail
+
+RENDERER-AWARE (obligatorisk — disse feltene har DIREKTE visuell effekt i UI):
+- client.theme (CSS: primary/background/card/foreground/border/radius/fontStyle)
+- page_sections[].module_type, variant, sort_order, is_visible
+- page_sections[].title, subtitle, body, eyebrow, cta_label, cta_href, anchor_id
+- page_sections[].background_style: default | muted | mint | dark | image
+- page_sections[].layout_style: centered | split | grid | editorial
+- page_sections[].image_url OG sections[].content.image_url (brukes til bilder der modulen støtter det — hero, mission, services_grid, partners, proof)
+- page_sections[].settings.content_depth: shallow | standard | deep (styrer prose-bredde og vertikal padding per seksjon)
+- recipe.module_strategy.storytelling_mode: default | documentary | editorial (styrer global vertikal rytme og bildekomposisjon)
+
+Dette er IKKE direkte koblet til CSS i v2 (visuell effekt = client.theme):
+- color_palette, typography, layout_preferences (kan oppsummeres tekstlig i module_strategy, men ikke forvent at de tegnes)
+
+Konkrete renderer-regler:
+- Når storytelling_mode=documentary → spre bilder utover siden via content.image_url på hero, mission, services_grid eller proof. Bruk split-layout på hero når media_notes har is_hero_candidate eller representative_scene tilsier det.
+- Når content_depth=deep på en seksjon → forvent større vertikal padding og bredere prose; bruk dette for hero/mission/proof i nonprofit eller editorial sites.
+- Når content_depth=shallow → forvent strammere padding; bruk kun for korte trust_strip / contact_cta-aktige seksjoner.
+- Sett module_strategy.storytelling_mode eksplisitt på recipe-nivå basert på prosjekttype (documentary for nonprofit/portfolio med ekte historier; editorial for food/brand; default ellers).
+- Sett settings.content_depth eksplisitt på hver seksjon — ikke la det være tomt for hero/mission/proof.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;

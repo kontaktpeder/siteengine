@@ -11,6 +11,14 @@ import type {
   SiteData,
   TrustPoint,
 } from "@/lib/site-types";
+import {
+  getContentDepth,
+  getStorytellingMode,
+  proseDepthClass,
+  sectionVerticalPadding,
+  shouldFullBleedMedia,
+  type StorytellingMode,
+} from "@/lib/render-contract";
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
@@ -124,6 +132,17 @@ function isDarkBg(style: BackgroundStyle | string | null | undefined) {
   return style === "dark";
 }
 
+function sectionImageUrl(section: PageSection): string | null {
+  const content = (section.content ?? {}) as { image_url?: string };
+  return content.image_url || section.image_url || null;
+}
+
+function paddingFor(section: PageSection, site: SiteData, base = "py-20"): string {
+  const storytelling = getStorytellingMode(site.recipe);
+  const depth = getContentDepth(section);
+  return sectionVerticalPadding({ storytelling, depth, base });
+}
+
 interface ModuleProps {
   section: PageSection;
   brain: ClientBrain | null;
@@ -196,10 +215,12 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 
 /* ---------- HERO ---------- */
 
-function HeroModule({ section, brain }: ModuleProps) {
+function HeroModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "centered";
   const layout = (section.layout_style as LayoutStyle) || null;
   const dark = isDarkBg(section.background_style);
+  const storytelling = getStorytellingMode(site.recipe);
+  const depth = getContentDepth(section);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
   const eyebrow = section.eyebrow ?? "Foreningen";
@@ -211,17 +232,28 @@ function HeroModule({ section, brain }: ModuleProps) {
 
   const isSplit = variant === "split" || layout === "split";
   const isCentered = variant === "centered" || layout === "centered";
+  const documentary = storytelling === "documentary";
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+
+  // Hero gets its own padding shape; bump in documentary or deep
+  const padBase =
+    documentary
+      ? "pt-28 pb-24 md:pt-40 md:pb-32"
+      : depth === "deep"
+        ? "pt-28 pb-24 md:pt-36 md:pb-28"
+        : "pt-24 pb-20 md:pt-32 md:pb-28";
 
   return (
     <Container
       id={sectionAnchor(section)}
       bg={section.background_style}
-      className="pt-24 pb-20 md:pt-32 md:pb-28"
+      className={padBase}
     >
       <div
         className={
           isSplit
-            ? "grid items-center gap-12 md:grid-cols-2"
+            ? `grid items-center ${documentary ? "gap-16" : "gap-12"} md:grid-cols-2`
             : isCentered
               ? "mx-auto max-w-3xl text-center"
               : "max-w-3xl"
@@ -229,7 +261,7 @@ function HeroModule({ section, brain }: ModuleProps) {
       >
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h1 className="mt-6 text-5xl leading-[1.05] md:text-7xl">{title}</h1>
+          <h1 className={`mt-6 leading-[1.05] ${documentary ? "text-5xl md:text-8xl" : "text-5xl md:text-7xl"}`}>{title}</h1>
           {subtitle ? (
             <p
               className={`mt-6 max-w-2xl text-lg md:text-xl ${
@@ -248,20 +280,24 @@ function HeroModule({ section, brain }: ModuleProps) {
             </div>
           )}
         </div>
-        {isSplit ? (() => {
-          const content = (section.content ?? {}) as { image_url?: string };
-          const settings = (section.settings ?? {}) as { image_alt?: string };
-          const imageUrl = content.image_url || section.image_url || null;
-          return imageUrl ? (
+        {isSplit ? (
+          imageUrl ? (
             <img
               src={imageUrl}
               alt={settings.image_alt ?? section.title ?? ""}
-              className="aspect-[4/5] w-full rounded-3xl object-cover"
+              className={`w-full rounded-3xl object-cover ${documentary ? "aspect-[4/5] md:min-h-[32rem]" : "aspect-[4/5]"}`}
             />
           ) : (
             <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
-          );
-        })() : null}
+          )
+        ) : null}
+        {!isSplit && imageUrl && documentary ? (
+          <img
+            src={imageUrl}
+            alt={settings.image_alt ?? section.title ?? ""}
+            className="mt-12 aspect-[16/9] w-full rounded-3xl object-cover"
+          />
+        ) : null}
       </div>
     </Container>
   );
@@ -290,31 +326,40 @@ function TrustStripModule({ section, brain }: ModuleProps) {
 
 /* ---------- MISSION ---------- */
 
-function MissionModule({ section, brain }: ModuleProps) {
+function MissionModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "simple";
   const eyebrow = section.eyebrow ?? section.title ?? "Vårt oppdrag";
   const cta = resolveCta(section, brain);
   const dark = isDarkBg(section.background_style);
+  const depth = getContentDepth(section);
+  const storytelling = getStorytellingMode(site.recipe);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+  const showSideImage =
+    !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
+  const pad = paddingFor(section, site);
 
   if (variant === "cards") {
-    const cards = [
-      brain?.problem_statement && { label: "Problem", body: brain.problem_statement },
-      brain?.solution_statement && { label: "Løsning", body: brain.solution_statement },
-      brain?.vision && { label: "Visjon", body: brain.vision },
-    ].filter(Boolean) as { label: string; body: string }[];
     return (
-      <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className="py-20">
-        <div className="max-w-2xl">
+      <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
+        <div className={proseDepthClass(depth)}>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {cards.map((c, i) => (
-            <div key={i} className="rounded-3xl border border-border bg-card p-7">
-              <div className="text-sm font-semibold text-primary">{c.label}</div>
-              <p className="mt-3 text-foreground">{c.body}</p>
-            </div>
-          ))}
+          {[
+            brain?.problem_statement && { label: "Problem", body: brain.problem_statement },
+            brain?.solution_statement && { label: "Løsning", body: brain.solution_statement },
+            brain?.vision && { label: "Visjon", body: brain.vision },
+          ].filter(Boolean).map((c, i) => {
+            const card = c as { label: string; body: string };
+            return (
+              <div key={i} className="rounded-3xl border border-border bg-card p-7">
+                <div className="text-sm font-semibold text-primary">{card.label}</div>
+                <p className="mt-3 text-foreground">{card.body}</p>
+              </div>
+            );
+          })}
         </div>
         {cta ? (
           <div className="mt-8">
@@ -327,8 +372,8 @@ function MissionModule({ section, brain }: ModuleProps) {
 
   // simple / editorial
   return (
-    <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className="py-20">
-      <div className="grid gap-12 md:grid-cols-2">
+    <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
+      <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
@@ -338,32 +383,57 @@ function MissionModule({ section, brain }: ModuleProps) {
             </div>
           ) : null}
         </div>
-        <div className={`space-y-6 text-lg ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+        {showSideImage ? (
+          <img
+            src={imageUrl!}
+            alt={settings.image_alt ?? section.title ?? ""}
+            className="aspect-[4/5] w-full rounded-3xl object-cover"
+          />
+        ) : (
+          <div className={`space-y-6 ${proseDepthClass(depth)} ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+            {brain?.problem_statement ? <p>{brain.problem_statement}</p> : null}
+            {brain?.solution_statement ? <p>{brain.solution_statement}</p> : null}
+            {brain?.vision ? (
+              <p className={dark ? "text-background" : "text-foreground"}>
+                <span className="font-medium">Visjon:</span> {brain.vision}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </div>
+      {showSideImage ? (
+        <div className={`mt-10 grid gap-6 md:grid-cols-2 ${proseDepthClass(depth)} ${dark ? "text-background/80" : "text-muted-foreground"}`}>
           {brain?.problem_statement ? <p>{brain.problem_statement}</p> : null}
           {brain?.solution_statement ? <p>{brain.solution_statement}</p> : null}
           {brain?.vision ? (
-            <p className={dark ? "text-background" : "text-foreground"}>
+            <p className={`md:col-span-2 ${dark ? "text-background" : "text-foreground"}`}>
               <span className="font-medium">Visjon:</span> {brain.vision}
             </p>
           ) : null}
         </div>
-      </div>
+      ) : null}
     </Container>
   );
 }
 
 /* ---------- SERVICES GRID ---------- */
 
-function ServicesGridModule({ section, brain }: ModuleProps) {
+function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
   const compact = section.variant === "compact";
   const dark = isDarkBg(section.background_style);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+  const storytelling = getStorytellingMode(site.recipe);
+  const showImage =
+    !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
+  const pad = paddingFor(section, site);
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
       bg={section.background_style}
-      className="py-20"
+      className={pad}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
@@ -374,6 +444,13 @@ function ServicesGridModule({ section, brain }: ModuleProps) {
           </p>
         ) : null}
       </div>
+      {showImage ? (
+        <img
+          src={imageUrl!}
+          alt={settings.image_alt ?? section.title ?? ""}
+          className="mt-10 aspect-[16/9] w-full rounded-3xl object-cover"
+        />
+      ) : null}
       <div
         className={`mt-12 grid gap-5 ${
           compact ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
@@ -430,16 +507,19 @@ function ActivitiesModule({ section }: ModuleProps) {
 
 /* ---------- PARTNERS ---------- */
 
-function PartnersModule({ section, brain }: ModuleProps) {
+function PartnersModule({ section, brain, site }: ModuleProps) {
   const items = normalizePartners(brain?.partners);
   if (!items.length) return null;
   const variant = section.variant || "text_list";
   const dark = isDarkBg(section.background_style);
+  const pad = paddingFor(section, site);
+  const imageUrl = sectionImageUrl(section);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
   return (
     <Container
       id={sectionAnchor(section) ?? "samarbeid"}
       bg={section.background_style}
-      className="py-20"
+      className={pad}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
@@ -450,6 +530,13 @@ function PartnersModule({ section, brain }: ModuleProps) {
           </p>
         ) : null}
       </div>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={settings.image_alt ?? section.title ?? ""}
+          className="mt-10 aspect-[21/9] w-full rounded-3xl object-cover"
+        />
+      ) : null}
       {variant === "logo_grid" ? (
         <div className="mt-10 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
           {items.map((p, i) => (
@@ -479,16 +566,26 @@ function PartnersModule({ section, brain }: ModuleProps) {
 
 /* ---------- PROOF ---------- */
 
-function ProofModule({ section, brain }: ModuleProps) {
+function ProofModule({ section, brain, site }: ModuleProps) {
   const items = normalizeAudience(brain?.audience);
   if (!items.length && !brain?.long_description) return null;
   const dark = isDarkBg(section.background_style);
+  const pad = paddingFor(section, site);
+  const imageUrl = sectionImageUrl(section);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={pad}>
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
         <div>
           <Eyebrow dark={dark}>{section.eyebrow ?? section.title ?? "Hvorfor"}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">For dem det er bygget for.</h2>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={settings.image_alt ?? section.title ?? ""}
+              className="mt-8 aspect-[4/5] w-full rounded-3xl object-cover"
+            />
+          ) : null}
         </div>
         <div className="space-y-4">
           {items.map((a, i) => (
