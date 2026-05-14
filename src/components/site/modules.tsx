@@ -507,16 +507,19 @@ function ActivitiesModule({ section }: ModuleProps) {
 
 /* ---------- PARTNERS ---------- */
 
-function PartnersModule({ section, brain }: ModuleProps) {
+function PartnersModule({ section, brain, site }: ModuleProps) {
   const items = normalizePartners(brain?.partners);
   if (!items.length) return null;
   const variant = section.variant || "text_list";
   const dark = isDarkBg(section.background_style);
+  const pad = paddingFor(section, site);
+  const imageUrl = sectionImageUrl(section);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
   return (
     <Container
       id={sectionAnchor(section) ?? "samarbeid"}
       bg={section.background_style}
-      className="py-20"
+      className={pad}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
@@ -527,6 +530,13 @@ function PartnersModule({ section, brain }: ModuleProps) {
           </p>
         ) : null}
       </div>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={settings.image_alt ?? section.title ?? ""}
+          className="mt-10 aspect-[21/9] w-full rounded-3xl object-cover"
+        />
+      ) : null}
       {variant === "logo_grid" ? (
         <div className="mt-10 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
           {items.map((p, i) => (
