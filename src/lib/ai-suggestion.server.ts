@@ -39,6 +39,11 @@ const VALID_COMPRESSION = new Set([
   "simplify",
   "aggressively_summarize",
 ]);
+const VALID_SECTION_DENSITY_AI = new Set(["compact", "normal", "featured"]);
+const VALID_VISUAL_WEIGHT_AI = new Set(["quiet", "standard", "hero"]);
+const VALID_IMAGE_SCALE_AI = new Set(["small", "medium", "large"]);
+const VALID_ALIGNMENT_AI = new Set(["left", "center", "split"]);
+const VALID_CONTENT_DEPTH_SECTION = new Set(["shallow", "standard", "deep"]);
 
 // JSON-like used in AI suggestion fields so the server-fn serializer accepts the shape.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,18 +190,24 @@ RENDERER-AWARE (obligatorisk — disse feltene har DIREKTE visuell effekt i UI):
 - page_sections[].layout_style: centered | split | grid | editorial
 - page_sections[].image_url OG sections[].content.image_url (brukes til bilder der modulen støtter det — hero, mission, services_grid, partners, proof)
 - mission: page_sections[].subtitle vises under overskriften som «story lead» / hovedhistorie når satt (bruk til flagship_story eller utdyping etter hero)
-- page_sections[].settings.content_depth: shallow | standard | deep (styrer prose-bredde og vertikal padding per seksjon)
+- page_sections[].settings.content_depth: shallow | standard | deep (FALLBACK — fortsatt støttet, men foretrekk de eksplisitte layout-tokens under)
+- page_sections[].settings.sectionDensity: compact | normal | featured (vertikal padding/luft for seksjonen)
+- page_sections[].settings.visualWeight: quiet | standard | hero (typografisk tyngde — KUN hero-modulen får "hero")
+- page_sections[].settings.imageScale: small | medium | large (bilde-dominans i seksjonen — ikke fri høyde)
+- page_sections[].settings.alignment: left | center | split (komposisjon; "split" forutsetter to kolonner i modulen)
 - recipe.storytelling_mode (ROOT — éneste sannhet): minimal | editorial | documentary | conversion. Renderer mapper dette til vertikal rytme og bildekomposisjon. recipe.module_strategy.storytelling_mode er DEPRECATED — ikke skriv den lenger.
 
-Dette er IKKE direkte koblet til CSS i v2 (visuell effekt = client.theme):
-- color_palette, typography, layout_preferences (kan oppsummeres tekstlig i module_strategy, men ikke forvent at de tegnes)
+KONTROLLERT LAYOUT (obligatorisk — ikke improviser Tailwind):
+- Layout, spacing, høyde og grid styres KUN av tokens over (sectionDensity / visualWeight / imageScale / alignment) + module_type + background_style. Ikke skriv frie Tailwind-strenger i content/settings for layout-effekter.
+- Tenk hele forsiden som ÉN scroll. Hierarki: hero størst (sectionDensity="featured", visualWeight="hero", imageScale="large"), mission/story nest størst (sectionDensity="normal" eller "featured", visualWeight="standard"), trust_strip / faq / contact_cta / partners kompaktere (sectionDensity="compact", visualWeight="quiet").
+- "visualWeight":"hero" er FORBEHOLDT module_type="hero". Sett "standard" eller "quiet" på alt annet — ellers blir det auto-korrigert.
+- Sett tokens eksplisitt på hver seksjon — ikke la dem være tomme. Hvis ukjent: bruk "normal" / "standard" / "medium" / "left".
 
 Konkrete renderer-regler:
 - Når storytelling_mode=documentary → spre bilder utover siden via content.image_url på hero, mission, services_grid eller proof. Bruk split-layout på hero når media_notes har is_hero_candidate eller representative_scene tilsier det.
-- Når content_depth=deep på en seksjon → forvent større vertikal padding og bredere prose; bruk dette for hero/mission/proof i nonprofit eller editorial sites.
-- Når content_depth=shallow → forvent strammere padding; bruk kun for korte trust_strip / contact_cta-aktige seksjoner.
+- Når sectionDensity="featured" → forvent større vertikal padding; bruk for hero/mission/proof i nonprofit eller editorial sites.
+- Når sectionDensity="compact" → forvent strammere padding; bruk for trust_strip / faq / contact_cta.
 - Sett recipe.storytelling_mode eksplisitt basert på prosjekttype (documentary for nonprofit/portfolio med ekte historier; editorial for food/brand; minimal/conversion ellers).
-- Sett settings.content_depth eksplisitt på hver seksjon — ikke la det være tomt for hero/mission/proof.
 
 SECTION RICHNESS MINIMA (obligatorisk — overstyrer "elegant korthet"):
 
@@ -275,6 +286,50 @@ function asObj(v: unknown): Record<string, unknown> {
     : {};
 }
 
+function clampEnum(
+  v: unknown,
+  set: ReadonlySet<string>,
+  fallback: string,
+): string {
+  return typeof v === "string" && set.has(v) ? v : fallback;
+}
+
+function clampSectionSettings(
+  settings: Record<string, unknown>,
+  moduleType: string,
+  warnings: string[],
+  index: number,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...settings };
+  // Strip any free-form Tailwind-ish keys we never want from AI
+  for (const banned of ["className", "tailwind", "padding", "spacing"]) {
+    if (banned in out) delete out[banned];
+  }
+  if (out.content_depth !== undefined) {
+    out.content_depth = clampEnum(out.content_depth, VALID_CONTENT_DEPTH_SECTION, "standard");
+  }
+  if (out.sectionDensity !== undefined) {
+    out.sectionDensity = clampEnum(out.sectionDensity, VALID_SECTION_DENSITY_AI, "normal");
+  }
+  if (out.imageScale !== undefined) {
+    out.imageScale = clampEnum(out.imageScale, VALID_IMAGE_SCALE_AI, "medium");
+  }
+  if (out.alignment !== undefined) {
+    out.alignment = clampEnum(out.alignment, VALID_ALIGNMENT_AI, "left");
+  }
+  if (out.visualWeight !== undefined) {
+    let vw = clampEnum(out.visualWeight, VALID_VISUAL_WEIGHT_AI, "standard");
+    if (vw === "hero" && moduleType !== "hero") {
+      warnings.push(
+        `Section #${index} (${moduleType}): visualWeight="hero" er forbeholdt hero-modul — auto-korrigert til "standard".`,
+      );
+      vw = "standard";
+    }
+    out.visualWeight = vw;
+  }
+  return out;
+}
+
 function validateAndCoerce(parsed: unknown): AiSuggestion {
   if (!parsed || typeof parsed !== "object") {
     throw new Error("AI returnerte ikke et objekt");
@@ -312,7 +367,7 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
         background_style: VALID_BG.has(bg) ? bg : "default",
         layout_style: VALID_LAYOUT.has(layout) ? layout : null,
         content: asObj(s.content),
-        settings: asObj(s.settings),
+        settings: clampSectionSettings(asObj(s.settings), mt, warnings, i),
       };
       return row;
     })
@@ -582,7 +637,7 @@ export async function generateAiSuggestion(input: {
       brain: { site_type: "", primary_goal: "", secondary_goal: "", audience: [], brand_keywords: [], tone_keywords: [], short_description: "", long_description: "", mission: "", vision: "", problem_statement: "", solution_statement: "", trust_points: [], services: [], partners: [], faq: [], cta_primary_label: "", cta_primary_href: "", cta_secondary_label: "", cta_secondary_href: "", flagship_story: "", emotional_trigger: "", anti_brand: "", memorable_takeaway: "", representative_scene: "", desired_feelings: "" },
       recipe: { recipe_type: "", site_type: "", primary_intent: "", design_direction: "", color_palette: {}, typography: {}, layout_preferences: {}, module_strategy: {}, variant_presets: {}, enabled_modules: [], navigation: [], footer: {}, content_depth: "balanced", storytelling_mode: "editorial", visual_proof_level: "medium", rhythm_strategy: "varied", compression_policy: "preserve_detail", creative_direction: "" },
       home_page: { title: "", meta_title: "", meta_description: "", status: "published" },
-      sections: [{ module_type: "", variant: "", sort_order: 0, is_visible: true, anchor_id: "", eyebrow: "", title: "", subtitle: "", body: "", cta_label: "", cta_href: "", background_style: "", layout_style: "", content: {}, settings: {} }],
+      sections: [{ module_type: "", variant: "", sort_order: 0, is_visible: true, anchor_id: "", eyebrow: "", title: "", subtitle: "", body: "", cta_label: "", cta_href: "", background_style: "", layout_style: "", content: {}, settings: { content_depth: "standard", sectionDensity: "normal", visualWeight: "standard", imageScale: "medium", alignment: "left" } }],
     },
   };
 

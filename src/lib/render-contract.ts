@@ -37,7 +37,7 @@ export function sectionVerticalPadding(args: {
   if (storytelling === "documentary") {
     bump = depth === "deep" ? "py-28 md:py-36" : "py-24 md:py-28";
   } else if (storytelling === "editorial") {
-    bump = depth === "shallow" ? "py-16 md:py-20" : "py-22 md:py-26";
+    bump = depth === "shallow" ? "py-16 md:py-20" : "py-20 md:py-24";
   } else if (depth === "deep") {
     bump = "py-24 md:py-28";
   } else if (depth === "shallow") {

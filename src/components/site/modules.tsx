@@ -19,6 +19,7 @@ import {
   shouldFullBleedMedia,
   type StorytellingMode,
 } from "@/lib/render-contract";
+import { getSectionLayoutClasses } from "@/lib/section-layout";
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
@@ -137,10 +138,13 @@ function sectionImageUrl(section: PageSection): string | null {
   return content.image_url || section.image_url || null;
 }
 
-function paddingFor(section: PageSection, site: SiteData, base = "py-20"): string {
-  const storytelling = getStorytellingMode(site.recipe);
-  const depth = getContentDepth(section);
-  return sectionVerticalPadding({ storytelling, depth, base });
+function paddingFor(section: PageSection, site: SiteData, _base = "py-20"): string {
+  // Token-driven: sectionDensity from settings (with fallback from content_depth + module_type).
+  return getSectionLayoutClasses({ section, recipe: site.recipe }).root;
+}
+
+function layoutFor(section: PageSection, site: SiteData) {
+  return getSectionLayoutClasses({ section, recipe: site.recipe });
 }
 
 interface ModuleProps {
@@ -237,12 +241,8 @@ function HeroModule({ section, brain, site }: ModuleProps) {
   const imageUrl = sectionImageUrl(section);
 
   // Hero gets its own padding shape; bump in documentary or deep
-  const padBase =
-    documentary
-      ? "pt-28 pb-24 md:pt-40 md:pb-32"
-      : depth === "deep"
-        ? "pt-28 pb-24 md:pt-36 md:pb-28"
-        : "pt-24 pb-20 md:pt-32 md:pb-28";
+  // Hero padding: token-driven (sectionDensity defaults to "featured" for hero).
+  const padBase = layoutFor(section, site).root;
 
   return (
     <Container
@@ -305,11 +305,11 @@ function HeroModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- TRUST STRIP ---------- */
 
-function TrustStripModule({ section, brain }: ModuleProps) {
+function TrustStripModule({ section, brain, site }: ModuleProps) {
   const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-10">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="grid grid-cols-2 gap-x-8 gap-y-6 rounded-3xl border border-border bg-card p-8 md:grid-cols-4">
         {items.map((it, i) => (
           <div key={i}>
@@ -490,12 +490,12 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- ACTIVITIES ---------- */
 
-function ActivitiesModule({ section }: ModuleProps) {
+function ActivitiesModule({ section, site }: ModuleProps) {
   const content = (section.content ?? {}) as { items?: ActivityItem[] };
   const items = content.items ?? [];
   if (!items.length) return null;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="rounded-3xl bg-secondary p-10 md:p-16">
         <div className="max-w-2xl">
           {section.eyebrow ? <Eyebrow>{section.eyebrow}</Eyebrow> : null}
@@ -618,13 +618,13 @@ function ProofModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- FAQ ---------- */
 
-function FaqModule({ section, brain }: ModuleProps) {
+function FaqModule({ section, brain, site }: ModuleProps) {
   const items = normalizeFaq(brain?.faq);
   if (!items.length) return null;
   const variant = section.variant || "accordion";
   const dark = isDarkBg(section.background_style);
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
         {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
@@ -657,20 +657,21 @@ function FaqModule({ section, brain }: ModuleProps) {
 
 /* ---------- CONTACT CTA ---------- */
 
-function ContactCtaModule({ section, brain }: ModuleProps) {
+function ContactCtaModule({ section, brain, site }: ModuleProps) {
   const variant = section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
+  const pad = layoutFor(section, site).root;
 
   if (variant === "soft") {
     return (
       <Container
         id={sectionAnchor(section) ?? "kontakt"}
         bg={section.background_style}
-        className="py-20"
+        className={pad}
       >
         <div className="rounded-3xl border border-border bg-card p-10 md:p-14">
           <div className="max-w-2xl">
@@ -694,7 +695,7 @@ function ContactCtaModule({ section, brain }: ModuleProps) {
     <Container
       id={sectionAnchor(section) ?? "kontakt"}
       bg={section.background_style}
-      className="py-24"
+      className={pad}
     >
       <div className="rounded-3xl bg-primary p-10 text-primary-foreground md:p-16">
         <div className="max-w-2xl">
