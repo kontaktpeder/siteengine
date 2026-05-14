@@ -19,6 +19,7 @@ import {
   shouldFullBleedMedia,
   type StorytellingMode,
 } from "@/lib/render-contract";
+import { getSectionLayoutClasses } from "@/lib/section-layout";
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
