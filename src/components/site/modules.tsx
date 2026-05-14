@@ -11,6 +11,14 @@ import type {
   SiteData,
   TrustPoint,
 } from "@/lib/site-types";
+import {
+  getContentDepth,
+  getStorytellingMode,
+  proseDepthClass,
+  sectionVerticalPadding,
+  shouldFullBleedMedia,
+  type StorytellingMode,
+} from "@/lib/render-contract";
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
