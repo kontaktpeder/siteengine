@@ -512,7 +512,11 @@ export async function generateAiSuggestion(input: {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
     const fb = fallbackSuggestion(input.brain);
-    fb.warnings = ["LOVABLE_API_KEY mangler — brukte heuristikk"];
+    const gw = checkRichness(input.brain, fb);
+    fb.warnings = [
+      "LOVABLE_API_KEY mangler — brukte heuristikk",
+      ...gw,
+    ];
     return fb;
   }
 
