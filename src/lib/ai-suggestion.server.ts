@@ -458,7 +458,12 @@ export async function generateAiSuggestion(input: {
       if (!m) throw new Error("Kunne ikke parse JSON fra AI");
       parsed = JSON.parse(m[0]);
     }
-    return validateAndCoerce(parsed);
+    const result = validateAndCoerce(parsed);
+    const guardWarnings = checkRichness(input.brain, result);
+    if (guardWarnings.length) {
+      result.warnings = [...(result.warnings ?? []), ...guardWarnings];
+    }
+    return result;
   } catch (err) {
     console.error("[ai-suggestion] AI call failed, using fallback:", err);
     const fb = fallbackSuggestion(input.brain);
