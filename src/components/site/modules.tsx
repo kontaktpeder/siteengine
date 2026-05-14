@@ -138,10 +138,13 @@ function sectionImageUrl(section: PageSection): string | null {
   return content.image_url || section.image_url || null;
 }
 
-function paddingFor(section: PageSection, site: SiteData, base = "py-20"): string {
-  const storytelling = getStorytellingMode(site.recipe);
-  const depth = getContentDepth(section);
-  return sectionVerticalPadding({ storytelling, depth, base });
+function paddingFor(section: PageSection, site: SiteData, _base = "py-20"): string {
+  // Token-driven: sectionDensity from settings (with fallback from content_depth + module_type).
+  return getSectionLayoutClasses({ section, recipe: site.recipe }).root;
+}
+
+function layoutFor(section: PageSection, site: SiteData) {
+  return getSectionLayoutClasses({ section, recipe: site.recipe });
 }
 
 interface ModuleProps {
