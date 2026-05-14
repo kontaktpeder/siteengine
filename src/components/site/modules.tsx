@@ -490,12 +490,12 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- ACTIVITIES ---------- */
 
-function ActivitiesModule({ section }: ModuleProps) {
+function ActivitiesModule({ section, site }: ModuleProps) {
   const content = (section.content ?? {}) as { items?: ActivityItem[] };
   const items = content.items ?? [];
   if (!items.length) return null;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="rounded-3xl bg-secondary p-10 md:p-16">
         <div className="max-w-2xl">
           {section.eyebrow ? <Eyebrow>{section.eyebrow}</Eyebrow> : null}
