@@ -222,7 +222,10 @@ D) NONPROFIT / DOCUMENTARY (prioritet)
 - Når site_type er nonprofit ELLER storytelling_mode er documentary: prefer "rik organisasjon" fremfor "minimalistisk magasin". Luft og ro = mer whitespace og bedre hierarki — IKKE færre fakta om hva organisasjonen faktisk gjør.
 
 E) KONFLIKTLOSNING
-- Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.`;
+- Hvis "klarhet", "elegant" eller Studio Brain-ord som "minimal" kolliderer med A–D: Client Brain + disse richness-reglene VINNER.
+
+RETRY / ENFORCEMENT:
+Hvis brukerens JSON har "mode":"richness_retry", er hovedoppgaven å fjerne alle elementer i "richness_warnings" ved å returnere et helt nytt gyldig svar i samme expected_format. Ikke send delvise oppdateringer eller diff. Bevar tema, struktur og god copy der det ikke bryter med SECTION RICHNESS MINIMA. Alle "richness_warnings" skal være borte i dette svaret.`;
 
 function clampString(v: unknown, fallback = ""): string {
   return typeof v === "string" ? v : fallback;
@@ -440,6 +443,64 @@ function checkRichness(
   return warnings;
 }
 
+const RICHNESS_RETRY_ENABLED = process.env.AI_RICHNESS_RETRY !== "0";
+
+async function callLovableJsonModel(
+  apiKey: string,
+  messages: { role: "system" | "user"; content: string }[],
+): Promise<unknown> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`AI gateway ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  if (!content.trim()) throw new Error("Tomt AI-svar");
+  try {
+    return JSON.parse(content);
+  } catch {
+    const m = content.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error("Kunne ikke parse JSON fra AI");
+    return JSON.parse(m[0]);
+  }
+}
+
+function buildRichnessRetryUserContent(
+  baseUserPayload: Record<string, unknown>,
+  richnessWarnings: string[],
+  failed: AiSuggestion,
+): string {
+  return JSON.stringify({
+    mode: "richness_retry",
+    instruction:
+      "FORRIGE FORSLAG FEILET RICHNESS-GUARD. Returner et NYTT komplett JSON-objekt i NØYAKTIG samme struktur som expected_format (client, brain, recipe, home_page, sections). " +
+      "Fiks KUN det som richness_warnings beskriver: gjenopprett manglende listeelementer i brain (services, faq, partners, trust_points, audience), og fyll activities.content.items (3–6) der relevant. " +
+      "Ikke auto-merge i tanken — skriv naturlig norsk, behold god rytme og tema der det ikke strider mot richness. " +
+      "Alle richness_warnings skal være borte i dette svaret.",
+    richness_warnings: richnessWarnings,
+    original_request: baseUserPayload,
+    failed_attempt: {
+      client: failed.client,
+      brain: failed.brain,
+      recipe: failed.recipe,
+      home_page: failed.home_page,
+      sections: failed.sections,
+    },
+  });
+}
+
 export async function generateAiSuggestion(input: {
   client: Record<string, unknown> | null;
   brain: Record<string, unknown>;
@@ -451,7 +512,11 @@ export async function generateAiSuggestion(input: {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
     const fb = fallbackSuggestion(input.brain);
-    fb.warnings = ["LOVABLE_API_KEY mangler — brukte heuristikk"];
+    const gw = checkRichness(input.brain, fb);
+    fb.warnings = [
+      "LOVABLE_API_KEY mangler — brukte heuristikk",
+      ...gw,
+    ];
     return fb;
   }
 
@@ -487,43 +552,48 @@ export async function generateAiSuggestion(input: {
     },
   };
 
-  try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: JSON.stringify(userPayload) },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+  const messagesBase: { role: "system" | "user"; content: string }[] = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: JSON.stringify(userPayload) },
+  ];
 
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`AI gateway ${res.status}: ${t.slice(0, 300)}`);
-    }
-    const json = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const content = json.choices?.[0]?.message?.content ?? "";
-    if (!content.trim()) throw new Error("Tomt AI-svar");
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      // Try extracting first {...} block
-      const m = content.match(/\{[\s\S]*\}/);
-      if (!m) throw new Error("Kunne ikke parse JSON fra AI");
-      parsed = JSON.parse(m[0]);
-    }
+  try {
+    const parsed = await callLovableJsonModel(apiKey, messagesBase);
     const result = validateAndCoerce(parsed);
     const guardWarnings = checkRichness(input.brain, result);
+
+    if (guardWarnings.length && RICHNESS_RETRY_ENABLED) {
+      const retryContent = buildRichnessRetryUserContent(userPayload, guardWarnings, result);
+      try {
+        const parsedRetry = await callLovableJsonModel(apiKey, [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: retryContent },
+        ]);
+        const result2 = validateAndCoerce(parsedRetry);
+        const guard2 = checkRichness(input.brain, result2);
+        result2.warnings = [
+          ...(result.warnings ?? []),
+          `Richness-guard utløste retry: ${guardWarnings.length} avvik i første forslag.`,
+          "Richness-retry fullført.",
+          ...guard2,
+        ];
+        if (guard2.length) {
+          result2.warnings.push(
+            "Etter 1 retry er richness-guard fortsatt ikke fornøyd — gjennomgå forslaget manuelt eller kjør generering på nytt.",
+          );
+        }
+        return result2;
+      } catch (retryErr) {
+        console.error("[ai-suggestion] richness retry failed:", retryErr);
+        result.warnings = [
+          ...(result.warnings ?? []),
+          ...guardWarnings,
+          `Richness-retry feilet: ${(retryErr as Error).message} — beholdt første forslag.`,
+        ];
+        return result;
+      }
+    }
+
     if (guardWarnings.length) {
       result.warnings = [...(result.warnings ?? []), ...guardWarnings];
     }
@@ -531,7 +601,11 @@ export async function generateAiSuggestion(input: {
   } catch (err) {
     console.error("[ai-suggestion] AI call failed, using fallback:", err);
     const fb = fallbackSuggestion(input.brain);
-    fb.warnings = [`AI feilet: ${(err as Error).message} — brukte heuristikk`];
+    const gw = checkRichness(input.brain, fb);
+    fb.warnings = [
+      `AI feilet: ${(err as Error).message} — brukte heuristikk`,
+      ...gw,
+    ];
     return fb;
   }
 }
