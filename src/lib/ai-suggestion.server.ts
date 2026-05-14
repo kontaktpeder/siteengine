@@ -443,6 +443,64 @@ function checkRichness(
   return warnings;
 }
 
+const RICHNESS_RETRY_ENABLED = process.env.AI_RICHNESS_RETRY !== "0";
+
+async function callLovableJsonModel(
+  apiKey: string,
+  messages: { role: "system" | "user"; content: string }[],
+): Promise<unknown> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-3-flash-preview",
+      messages,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`AI gateway ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  if (!content.trim()) throw new Error("Tomt AI-svar");
+  try {
+    return JSON.parse(content);
+  } catch {
+    const m = content.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error("Kunne ikke parse JSON fra AI");
+    return JSON.parse(m[0]);
+  }
+}
+
+function buildRichnessRetryUserContent(
+  baseUserPayload: Record<string, unknown>,
+  richnessWarnings: string[],
+  failed: AiSuggestion,
+): string {
+  return JSON.stringify({
+    mode: "richness_retry",
+    instruction:
+      "FORRIGE FORSLAG FEILET RICHNESS-GUARD. Returner et NYTT komplett JSON-objekt i NØYAKTIG samme struktur som expected_format (client, brain, recipe, home_page, sections). " +
+      "Fiks KUN det som richness_warnings beskriver: gjenopprett manglende listeelementer i brain (services, faq, partners, trust_points, audience), og fyll activities.content.items (3–6) der relevant. " +
+      "Ikke auto-merge i tanken — skriv naturlig norsk, behold god rytme og tema der det ikke strider mot richness. " +
+      "Alle richness_warnings skal være borte i dette svaret.",
+    richness_warnings: richnessWarnings,
+    original_request: baseUserPayload,
+    failed_attempt: {
+      client: failed.client,
+      brain: failed.brain,
+      recipe: failed.recipe,
+      home_page: failed.home_page,
+      sections: failed.sections,
+    },
+  });
+}
+
 export async function generateAiSuggestion(input: {
   client: Record<string, unknown> | null;
   brain: Record<string, unknown>;
