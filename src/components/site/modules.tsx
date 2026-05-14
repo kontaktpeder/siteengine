@@ -566,16 +566,26 @@ function PartnersModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- PROOF ---------- */
 
-function ProofModule({ section, brain }: ModuleProps) {
+function ProofModule({ section, brain, site }: ModuleProps) {
   const items = normalizeAudience(brain?.audience);
   if (!items.length && !brain?.long_description) return null;
   const dark = isDarkBg(section.background_style);
+  const pad = paddingFor(section, site);
+  const imageUrl = sectionImageUrl(section);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-20">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={pad}>
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
         <div>
           <Eyebrow dark={dark}>{section.eyebrow ?? section.title ?? "Hvorfor"}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">For dem det er bygget for.</h2>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={settings.image_alt ?? section.title ?? ""}
+              className="mt-8 aspect-[4/5] w-full rounded-3xl object-cover"
+            />
+          ) : null}
         </div>
         <div className="space-y-4">
           {items.map((a, i) => (
