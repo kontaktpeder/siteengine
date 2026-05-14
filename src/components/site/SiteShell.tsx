@@ -71,6 +71,9 @@ function buildFallbackSections(data: SiteData) {
     created_at: new Date(0).toISOString(),
     updated_at: new Date(0).toISOString(),
     anchor_id: anchors[moduleType] ?? null,
+  })).map((s) => ({
+    ...s,
+    settings: { content_depth: "standard" },
     eyebrow: eyebrows[moduleType] ?? null,
     cta_label: moduleType === "contact_cta" ? data.brain?.cta_primary_label ?? null : null,
     cta_href: moduleType === "contact_cta" ? data.brain?.cta_primary_href ?? null : null,
