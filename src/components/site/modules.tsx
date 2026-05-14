@@ -309,7 +309,7 @@ function TrustStripModule({ section, brain }: ModuleProps) {
   const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className="py-10">
+    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="grid grid-cols-2 gap-x-8 gap-y-6 rounded-3xl border border-border bg-card p-8 md:grid-cols-4">
         {items.map((it, i) => (
           <div key={i}>
