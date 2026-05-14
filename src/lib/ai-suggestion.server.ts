@@ -323,7 +323,7 @@ function validateAndCoerce(parsed: unknown): AiSuggestion {
         background_style: VALID_BG.has(bg) ? bg : "default",
         layout_style: VALID_LAYOUT.has(layout) ? layout : null,
         content: asObj(s.content),
-        settings: asObj(s.settings),
+        settings: clampSectionSettings(asObj(s.settings), mt, warnings, i),
       };
       return row;
     })
