@@ -376,6 +376,70 @@ function fallbackSuggestion(brain: Record<string, unknown>): AiSuggestion {
   };
 }
 
+function countMeaningful(v: unknown): number {
+  if (!Array.isArray(v)) return 0;
+  return v.filter((item) => {
+    if (typeof item === "string") return item.trim().length > 0;
+    if (item && typeof item === "object") return Object.keys(item).length > 0;
+    return false;
+  }).length;
+}
+
+function checkRichness(
+  inputBrain: Record<string, unknown>,
+  result: AiSuggestion,
+): string[] {
+  const warnings: string[] = [];
+  const outBrain = result.brain ?? {};
+  const cd = result.recipe.content_depth;
+  const sm = result.recipe.storytelling_mode;
+  const cp = result.recipe.compression_policy;
+  const enforce =
+    cd === "rich" ||
+    sm === "documentary" ||
+    cp === "preserve_detail" ||
+    result.recipe.site_type === "nonprofit";
+  if (!enforce) return warnings;
+
+  const checks: { key: string; min?: number; label: string }[] = [
+    { key: "services", min: 8, label: "tjenester" },
+    { key: "faq", min: 4, label: "FAQ-spørsmål" },
+    { key: "partners", min: 4, label: "partnere" },
+    { key: "trust_points", min: 3, label: "trust points" },
+    { key: "audience", label: "målgrupper" },
+  ];
+
+  for (const c of checks) {
+    const nIn = countMeaningful(inputBrain[c.key]);
+    const nOut = countMeaningful((outBrain as Record<string, unknown>)[c.key]);
+    if (nIn === 0) continue;
+    const required = c.min ? Math.min(nIn, c.min) : nIn;
+    if (nOut < required) {
+      warnings.push(
+        `Richness-guard: ${c.label} kollapset (input=${nIn}, output=${nOut}, krav≥${required}). AI fjernet meningsfullt innhold fra Client Brain.`,
+      );
+    }
+  }
+
+  // activities section: if present, expect 3-6 items when input has material
+  const activitiesSection = result.sections.find((s) => s.module_type === "activities");
+  if (activitiesSection) {
+    const items = (activitiesSection.content as { items?: unknown[] } | undefined)?.items;
+    const nItems = countMeaningful(items);
+    const inputMaterial = Math.max(
+      countMeaningful(inputBrain.services),
+      countMeaningful((inputBrain as Record<string, unknown>).activities),
+    );
+    if (inputMaterial >= 3 && nItems < 3) {
+      warnings.push(
+        `Richness-guard: activities-seksjonen har bare ${nItems} items, men Brain har ${inputMaterial} relevante elementer. Forvent 3–6 konkrete aktiviteter.`,
+      );
+    }
+  }
+
+  return warnings;
+}
+
 export async function generateAiSuggestion(input: {
   client: Record<string, unknown> | null;
   brain: Record<string, unknown>;
