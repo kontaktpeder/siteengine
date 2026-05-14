@@ -418,16 +418,22 @@ function MissionModule({ section, brain, site }: ModuleProps) {
 
 /* ---------- SERVICES GRID ---------- */
 
-function ServicesGridModule({ section, brain }: ModuleProps) {
+function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
   const compact = section.variant === "compact";
   const dark = isDarkBg(section.background_style);
+  const settings = (section.settings ?? {}) as { image_alt?: string };
+  const imageUrl = sectionImageUrl(section);
+  const storytelling = getStorytellingMode(site.recipe);
+  const showImage =
+    !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
+  const pad = paddingFor(section, site);
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
       bg={section.background_style}
-      className="py-20"
+      className={pad}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
@@ -438,6 +444,13 @@ function ServicesGridModule({ section, brain }: ModuleProps) {
           </p>
         ) : null}
       </div>
+      {showImage ? (
+        <img
+          src={imageUrl!}
+          alt={settings.image_alt ?? section.title ?? ""}
+          className="mt-10 aspect-[16/9] w-full rounded-3xl object-cover"
+        />
+      ) : null}
       <div
         className={`mt-12 grid gap-5 ${
           compact ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
