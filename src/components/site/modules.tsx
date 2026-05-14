@@ -241,12 +241,8 @@ function HeroModule({ section, brain, site }: ModuleProps) {
   const imageUrl = sectionImageUrl(section);
 
   // Hero gets its own padding shape; bump in documentary or deep
-  const padBase =
-    documentary
-      ? "pt-28 pb-24 md:pt-40 md:pb-32"
-      : depth === "deep"
-        ? "pt-28 pb-24 md:pt-36 md:pb-28"
-        : "pt-24 pb-20 md:pt-32 md:pb-28";
+  // Hero padding: token-driven (sectionDensity defaults to "featured" for hero).
+  const padBase = layoutFor(section, site).root;
 
   return (
     <Container
