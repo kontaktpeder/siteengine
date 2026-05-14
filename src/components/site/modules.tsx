@@ -132,6 +132,17 @@ function isDarkBg(style: BackgroundStyle | string | null | undefined) {
   return style === "dark";
 }
 
+function sectionImageUrl(section: PageSection): string | null {
+  const content = (section.content ?? {}) as { image_url?: string };
+  return content.image_url || section.image_url || null;
+}
+
+function paddingFor(section: PageSection, site: SiteData, base = "py-20"): string {
+  const storytelling = getStorytellingMode(site.recipe);
+  const depth = getContentDepth(section);
+  return sectionVerticalPadding({ storytelling, depth, base });
+}
+
 interface ModuleProps {
   section: PageSection;
   brain: ClientBrain | null;
