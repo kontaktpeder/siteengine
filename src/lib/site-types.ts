@@ -19,6 +19,10 @@ export type ModuleType =
 
 export interface ThemeTokens {
   primaryColor?: string;
+  primaryForegroundColor?: string;
+  secondaryColor?: string;
+  secondaryForegroundColor?: string;
+  accentColor?: string;
   backgroundColor?: string;
   surfaceColor?: string;
   textColor?: string;
