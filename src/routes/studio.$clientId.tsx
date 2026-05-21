@@ -25,6 +25,13 @@ import type {
   SiteRecipe,
 } from "@/lib/site-types";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  EMPTY_FORMAT_BRIEF,
+  parseFormatBrief,
+  type FormatBrief,
+} from "@/lib/format-brief";
+import { PAGE_TEMPLATES, type PageTemplate } from "@/lib/page-templates";
+import { buildClientContextPacket } from "@/lib/client-context-packet";
 
 export const Route = createFileRoute("/studio/$clientId")({
   loader: ({ params }) => getClientBundle({ data: { id: params.clientId } }),
