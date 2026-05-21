@@ -133,14 +133,14 @@ function JsonField({
   );
 }
 
-type Tab = "client" | "brain" | "recipe" | "sections";
+type Tab = "format" | "client" | "brain" | "recipe" | "sections";
 
 function StudioEditor() {
   const data = Route.useLoaderData() as Bundle;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("brain");
+  const [tab, setTab] = useState<Tab>("format");
   const [suggestion, setSuggestion] = useState<AiSuggestion | null>(null);
 
   const c = data.client;
