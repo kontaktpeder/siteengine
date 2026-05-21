@@ -328,7 +328,11 @@ export function buildArchetypeSliceFixture(archetype: SiteArchetype): SiteData {
   const client = {
     id: clientId,
     name:
-      archetype === "food_popup_editorial" ? "Gold of Sicily (slice)" : "Opplev-type (slice)",
+      archetype === "food_popup_minimal"
+        ? "Arancina Drop (slice)"
+        : archetype === "food_popup_editorial"
+          ? "Gold of Sicily (slice)"
+          : "Opplev-type (slice)",
     slug: "slice",
     status: "published",
     description: null,
@@ -339,7 +343,10 @@ export function buildArchetypeSliceFixture(archetype: SiteArchetype): SiteData {
   const brain = {
     id: "slice-brain",
     client_id: clientId,
-    site_type: archetype === "food_popup_editorial" ? "food_brand" : "nonprofit",
+    site_type:
+      archetype === "food_popup_editorial" || archetype === "food_popup_minimal"
+        ? "food_brand"
+        : "nonprofit",
     short_description: SHARED_COPY.heroTitle,
     long_description: SHARED_COPY.heroSubtitle,
     services: SHARED_COPY.services,
