@@ -4,6 +4,8 @@ import { ARCHETYPE_CONFIGS } from "@/lib/archetype-config";
 
 const SHARED_IMAGE =
   "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=80";
+const FOOD_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1606851094291-6efae152bb87?w=1600&q=80";
 
 const SHARED_COPY = {
   heroTitle: "Signatur opplevelse",
@@ -62,8 +64,11 @@ function sectionsFor(archetype: SiteArchetype): SiteData["sections"] {
       layout_style: isFood ? "editorial" : "split",
       cta_label: SHARED_COPY.ctaLabel,
       cta_href: SHARED_COPY.ctaHref,
-      image_url: SHARED_IMAGE,
-      content: { image_url: SHARED_IMAGE, image_alt: "Produkt" },
+      image_url: isFood ? FOOD_HERO_IMAGE : SHARED_IMAGE,
+      content: {
+        image_url: isFood ? FOOD_HERO_IMAGE : SHARED_IMAGE,
+        image_alt: isFood ? "Sicilian street food" : "Produkt",
+      },
       settings: { renderer: cfg.default_renderer_by_module.hero ?? {} },
     },
     {

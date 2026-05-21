@@ -4,11 +4,21 @@ import type { SiteArchetype } from "@/lib/archetype-config";
 export type Pacing = "tight" | "balanced" | "spacious";
 export type ImageScaleR = "small" | "medium" | "large" | "full";
 export type CtaIntensity = "soft" | "normal" | "strong";
+export type HeroMode = "copy_first" | "product_first";
+export type MediaProminence = "background" | "inline" | "hero_dominant";
+export type StoryWeight = "hidden" | "snippet" | "manifest";
+export type MenuStyle = "info_cards" | "signature_dishes";
+export type FaqWeight = "normal" | "compact_footer";
 
 export interface SectionRendererSettings {
   pacing?: Pacing;
   imageScale?: ImageScaleR;
   ctaIntensity?: CtaIntensity;
+  heroMode?: HeroMode;
+  mediaProminence?: MediaProminence;
+  storyWeight?: StoryWeight;
+  menuStyle?: MenuStyle;
+  faqWeight?: FaqWeight;
 }
 
 export type HeroLayout = "split-portrait" | "stacked-full" | "centered";
@@ -49,24 +59,45 @@ export interface ResolvedRenderer {
   eyebrowClass: string;
   primaryButtonClass: string;
   sectionSurfaceClass: string;
+  effectiveBackgroundStyle: string | null;
 }
 
 function mergeSettings(
   raw: unknown,
   archetype: SiteArchetype,
+  moduleType: string,
 ): Required<SectionRendererSettings> {
   const r = (raw ?? {}) as SectionRendererSettings;
   const defaultsByArchetype: Record<SiteArchetype, Required<SectionRendererSettings>> = {
-    neutral: { pacing: "balanced", imageScale: "medium", ctaIntensity: "normal" },
+    neutral: {
+      pacing: "balanced",
+      imageScale: "medium",
+      ctaIntensity: "normal",
+      heroMode: "copy_first",
+      mediaProminence: "inline",
+      storyWeight: "manifest",
+      menuStyle: "info_cards",
+      faqWeight: "normal",
+    },
     nonprofit_documentary: {
       pacing: "spacious",
       imageScale: "large",
       ctaIntensity: "soft",
+      heroMode: "copy_first",
+      mediaProminence: "inline",
+      storyWeight: "manifest",
+      menuStyle: "info_cards",
+      faqWeight: "normal",
     },
     food_popup_editorial: {
       pacing: "tight",
       imageScale: "full",
       ctaIntensity: "strong",
+      heroMode: moduleType === "hero" ? "product_first" : "copy_first",
+      mediaProminence: moduleType === "hero" ? "hero_dominant" : "inline",
+      storyWeight: "snippet",
+      menuStyle: "signature_dishes",
+      faqWeight: "compact_footer",
     },
   };
   const d = defaultsByArchetype[archetype];
@@ -74,6 +105,11 @@ function mergeSettings(
     pacing: r.pacing ?? d.pacing,
     imageScale: r.imageScale ?? d.imageScale,
     ctaIntensity: r.ctaIntensity ?? d.ctaIntensity,
+    heroMode: r.heroMode ?? d.heroMode,
+    mediaProminence: r.mediaProminence ?? d.mediaProminence,
+    storyWeight: r.storyWeight ?? d.storyWeight,
+    menuStyle: r.menuStyle ?? d.menuStyle,
+    faqWeight: r.faqWeight ?? d.faqWeight,
   };
 }
 
@@ -260,7 +296,7 @@ export function resolveRenderer(
   theme: ThemeTokens,
 ): ResolvedRenderer {
   const raw = (section.settings as Record<string, unknown> | null)?.renderer;
-  const settings = mergeSettings(raw, archetype);
+  const settings = mergeSettings(raw, archetype, section.module_type);
   const presentation = presentationFor(section.module_type, archetype);
   const heroLayout: HeroLayout =
     presentation === "food_hero_drop" ? "stacked-full" : heroLayoutFor(archetype, section);
@@ -283,6 +319,11 @@ export function resolveRenderer(
         ? "mint"
         : "neutral";
 
+  // Food forbids mint surface tokens — coerce to default
+  const rawBg = section.background_style ?? null;
+  const effectiveBackgroundStyle: string | null =
+    archetype === "food_popup_editorial" && rawBg === "mint" ? null : rawBg;
+
   return {
     archetype,
     settings,
@@ -294,7 +335,7 @@ export function resolveRenderer(
     imageAspect,
     cardClass:
       presentation === "food_menu_grid"
-        ? "rounded-lg border border-border bg-card p-5"
+        ? "rounded-xl border-0 bg-card shadow-md overflow-hidden"
         : cardClassFor(gridDensity),
     mediaClass: `${imageAspect} w-full ${
       presentation === "food_hero_drop" || presentation === "food_menu_grid"
@@ -311,5 +352,6 @@ export function resolveRenderer(
     eyebrowClass: eyebrowClassFor(presentation),
     primaryButtonClass: primaryButtonClassFor(presentation, settings.ctaIntensity),
     sectionSurfaceClass: sectionSurfaceClassFor(presentation),
+    effectiveBackgroundStyle,
   };
 }

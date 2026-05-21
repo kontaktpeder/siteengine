@@ -242,7 +242,9 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 /* ---------- HERO ---------- */
 
 function HeroModule({ section, brain, site }: ModuleProps) {
-  const dark = isDarkBg(section.background_style);
+  const resolved = useResolved(section, site);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
   const eyebrow = section.eyebrow ?? null;
@@ -251,19 +253,58 @@ function HeroModule({ section, brain, site }: ModuleProps) {
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-  const resolved = useResolved(section, site);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
+  const isFood = resolved.presentation === "food_hero_drop";
+  const isProductFirst =
+    resolved.settings.heroMode === "product_first" && !!imageUrl;
   const isSplit = resolved.heroLayout === "split-portrait";
   const isCentered = resolved.heroLayout === "centered";
   const isStacked = resolved.heroLayout === "stacked-full";
   const primaryClass = resolved.primaryButtonClass;
-  const isFood = resolved.presentation === "food_hero_drop";
+
+  // ===== Food product-first hero: image dominates first viewport, text overlays bottom
+  if (isProductFirst) {
+    const alt = settings.image_alt ?? section.title ?? "";
+    return (
+      <section
+        id={sectionAnchor(section)}
+        className="relative w-full overflow-hidden bg-foreground"
+      >
+        <img
+          src={imageUrl!}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover object-[center_45%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+        <div className="relative mx-auto flex min-h-[60vh] w-full max-w-6xl flex-col justify-end px-6 py-12 md:min-h-[72vh] md:px-10 md:py-16">
+          {eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{eyebrow}</Eyebrow>
+          ) : null}
+          <h1 className={`${resolved.headlineClass} max-w-3xl text-background`}>
+            {title}
+          </h1>
+          {subtitle ? (
+            <p className="mt-5 max-w-xl text-base text-background/85 md:text-lg">
+              {subtitle}
+            </p>
+          ) : null}
+          {primary ? (
+            <div className="mt-8">
+              <a href={primary.href} className={primaryClass}>
+                {primary.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <Container
       id={sectionAnchor(section)}
-      bg={section.background_style}
+      bg={bg}
       className={resolved.sectionClass}
     >
       <div
@@ -341,7 +382,7 @@ function TrustStripModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section)}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         className={resolved.sectionClass}
       >
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-6 text-sm">
@@ -390,23 +431,27 @@ function MissionModule({ section, brain, site }: ModuleProps) {
   const pad = paddingFor(section, site);
 
   if (resolved.presentation === "food_story_snippet") {
-    const headline = section.title ?? brain?.mission ?? "";
-    if (!headline && !section.subtitle && !brain?.flagship_story) return null;
+    const storyText =
+      section.subtitle?.trim() ||
+      (brain?.flagship_story && brain.flagship_story.length < 320
+        ? brain.flagship_story
+        : null);
+    // storyWeight=hidden → don't render if nothing concrete
+    if (!storyText && resolved.settings.storyWeight !== "manifest") return null;
     return (
       <Container
         id={sectionAnchor(section) ?? "om"}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         className={resolved.sectionClass}
       >
         <div className="max-w-2xl">
           {eyebrow ? (
             <Eyebrow className={resolved.eyebrowClass}>{eyebrow}</Eyebrow>
           ) : null}
-          {headline ? <h2 className={resolved.headlineClass}>{headline}</h2> : null}
-          {section.subtitle ? (
-            <p className={resolved.introClass}>{section.subtitle}</p>
-          ) : brain?.flagship_story ? (
-            <p className={resolved.introClass}>{brain.flagship_story}</p>
+          {storyText ? (
+            <p className="mt-4 max-w-xl text-base text-foreground/85 md:text-lg">
+              {storyText}
+            </p>
           ) : null}
           {cta ? (
             <div className="mt-8">
@@ -520,19 +565,22 @@ function MissionModule({ section, brain, site }: ModuleProps) {
 function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
-  const dark = isDarkBg(section.background_style);
+  const resolved = useResolved(section, site);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
   const storytelling = getStorytellingMode(site.recipe);
   const showImage =
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
-  const resolved = useResolved(section, site);
+  const isSignatureDishes = resolved.settings.menuStyle === "signature_dishes";
   const gridShowsCardImage =
-    resolved.gridDensity === "compact" && resolved.settings.imageScale === "large";
+    isSignatureDishes ||
+    (resolved.gridDensity === "compact" && resolved.settings.imageScale === "large");
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
-      bg={section.background_style}
+      bg={bg}
       className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
@@ -560,24 +608,46 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
           className={`mt-10 ${resolved.mediaClass}`}
         />
       ) : null}
-      <div className={resolved.containerClass}>
-        {items.map((s, i) => (
-          <div
-            key={i}
-            className={`${resolved.cardClass} transition hover:shadow-sm`}
-          >
-            {gridShowsCardImage ? (
-              <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
-            ) : null}
-            <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
-              {s.title}
-            </h3>
-            {s.description ? (
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
-            ) : null}
-          </div>
-        ))}
-      </div>
+      {isSignatureDishes ? (
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((s, i) => (
+            <div key={i} className={resolved.cardClass}>
+              <div className="aspect-[4/3] w-full bg-muted" />
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
+                  {i === items.length - 1 ? (
+                    <span className="inline-flex shrink-0 items-center rounded-sm bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                      Begrenset
+                    </span>
+                  ) : null}
+                </div>
+                {s.description ? (
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {s.description}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={resolved.containerClass}>
+          {items.map((s, i) => (
+            <div key={i} className={`${resolved.cardClass} transition hover:shadow-sm`}>
+              {gridShowsCardImage ? (
+                <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
+              ) : null}
+              <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
+                {s.title}
+              </h3>
+              {s.description ? (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
     </Container>
   );
 }
@@ -687,7 +757,7 @@ function ProofModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section)}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         surface={resolved.sectionSurfaceClass}
         className={resolved.sectionClass}
       >
@@ -750,32 +820,81 @@ function ProofModule({ section, brain, site }: ModuleProps) {
 function FaqModule({ section, brain, site }: ModuleProps) {
   const items = normalizeFaq(brain?.faq);
   if (!items.length) return null;
+  const resolved = useResolved(section, site);
   const variant = section.variant || "accordion";
-  const dark = isDarkBg(section.background_style);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
+  const compact = resolved.settings.faqWeight === "compact_footer";
+  const visibleItems = compact ? items.slice(0, 3) : items;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
+    <Container
+      id={sectionAnchor(section)}
+      bg={bg}
+      className={compact ? "py-10 md:py-14" : layoutFor(section, site).root}
+    >
       <div className="max-w-2xl">
-        {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
-        {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
+        {section.eyebrow ? (
+          <Eyebrow
+            dark={dark}
+            className={compact ? "text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground" : undefined}
+          >
+            {section.eyebrow}
+          </Eyebrow>
+        ) : null}
+        {section.title ? (
+          <h2 className={compact ? "mt-2 text-2xl font-sans font-semibold" : "mt-3 text-4xl md:text-5xl"}>
+            {section.title}
+          </h2>
+        ) : null}
       </div>
       {variant === "simple" ? (
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {items.map((q, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-lg font-medium">{q.question}</div>
-              <p className="mt-2 text-muted-foreground">{q.answer}</p>
+        <div className={compact ? "mt-6 grid gap-3 md:grid-cols-2" : "mt-10 grid gap-6 md:grid-cols-2"}>
+          {visibleItems.map((q, i) => (
+            <div
+              key={i}
+              className={
+                compact
+                  ? "rounded-lg border border-border bg-card p-4"
+                  : "rounded-2xl border border-border bg-card p-6"
+              }
+            >
+              <div className={compact ? "text-sm font-medium" : "text-lg font-medium"}>{q.question}</div>
+              <p className={compact ? "mt-1 text-xs text-muted-foreground" : "mt-2 text-muted-foreground"}>
+                {q.answer}
+              </p>
             </div>
           ))}
         </div>
       ) : (
-        <div className="mt-10 divide-y divide-border rounded-3xl border border-border bg-card">
-          {items.map((q, i) => (
-            <details key={i} className="group p-6 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between gap-6 text-left text-lg font-medium">
+        <div
+          className={
+            compact
+              ? "mt-6 divide-y divide-border rounded-xl border border-border bg-card"
+              : "mt-10 divide-y divide-border rounded-3xl border border-border bg-card"
+          }
+        >
+          {visibleItems.map((q, i) => (
+            <details
+              key={i}
+              className={
+                compact
+                  ? "group p-4 [&_summary::-webkit-details-marker]:hidden"
+                  : "group p-6 [&_summary::-webkit-details-marker]:hidden"
+              }
+            >
+              <summary
+                className={
+                  compact
+                    ? "flex cursor-pointer items-center justify-between gap-4 text-left text-sm font-medium"
+                    : "flex cursor-pointer items-center justify-between gap-6 text-left text-lg font-medium"
+                }
+              >
                 {q.question}
-                <span className="text-2xl text-muted-foreground transition group-open:rotate-45">+</span>
+                <span className={compact ? "text-lg text-muted-foreground transition group-open:rotate-45" : "text-2xl text-muted-foreground transition group-open:rotate-45"}>+</span>
               </summary>
-              <p className="mt-3 text-muted-foreground">{q.answer}</p>
+              <p className={compact ? "mt-2 text-xs text-muted-foreground" : "mt-3 text-muted-foreground"}>
+                {q.answer}
+              </p>
             </details>
           ))}
         </div>
@@ -807,7 +926,7 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section) ?? "kontakt"}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         surface={resolved.sectionSurfaceClass}
         className={pad}
       >
