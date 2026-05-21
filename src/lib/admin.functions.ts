@@ -273,7 +273,9 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       rhythm_strategy: data.rhythm_strategy ?? "varied",
       compression_policy: data.compression_policy ?? "preserve_detail",
       creative_direction: data.creative_direction ?? null,
-    };
+      page_template: data.page_template ?? "organization_documentary",
+      visual_tone: data.visual_tone ?? null,
+    } as never;
 
     if (existing && existing.length) {
       const { data: row, error } = await supabaseAdmin
