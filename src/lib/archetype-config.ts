@@ -178,3 +178,15 @@ export function getArchetypeFromSite(
 export function getArchetypeConfig(a: SiteArchetype): ArchetypeConfig {
   return ARCHETYPE_CONFIGS[a] ?? ARCHETYPE_CONFIGS.neutral;
 }
+
+/**
+ * Archetype theme OVERRIDES client.theme color tokens.
+ * Client theme can still contribute when archetype does not specify a value.
+ */
+export function mergeArchetypeTheme(
+  archetypeTheme: ThemeTokens,
+  clientTheme: ThemeTokens | null | undefined,
+): ThemeTokens {
+  const c = clientTheme ?? {};
+  return { ...c, ...archetypeTheme };
+}
