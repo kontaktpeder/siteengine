@@ -298,6 +298,51 @@ function StudioEditor() {
             rhythm_strategy: recipe.rhythm_strategy,
             compression_policy: recipe.compression_policy,
             creative_direction: recipe.creative_direction,
+            page_template: recipe.page_template,
+            visual_tone: recipe.visual_tone || null,
+          },
+        });
+      }
+      if (tab === "format") {
+        // Persist page_template + visual_tone on recipe
+        await upsertRecipe({
+          data: {
+            client_id: c!.id,
+            recipe_type: recipe.recipe_type,
+            site_type: recipe.site_type,
+            primary_intent: recipe.primary_intent,
+            design_direction: recipe.design_direction,
+            color_palette: parseJson(recipe.color_palette, {}),
+            typography: parseJson(recipe.typography, {}),
+            layout_preferences: parseJson(recipe.layout_preferences, {}),
+            module_strategy: parseJson(recipe.module_strategy, {}),
+            variant_presets: parseJson(recipe.variant_presets, {}),
+            enabled_modules: parseJson(recipe.enabled_modules, []),
+            navigation: parseJson(recipe.navigation, []),
+            footer: parseJson(recipe.footer, {}),
+            content_depth: recipe.content_depth,
+            storytelling_mode: recipe.storytelling_mode,
+            visual_proof_level: recipe.visual_proof_level,
+            rhythm_strategy: recipe.rhythm_strategy,
+            compression_policy: recipe.compression_policy,
+            creative_direction: recipe.creative_direction,
+            page_template: recipe.page_template,
+            visual_tone: recipe.visual_tone || null,
+          },
+        });
+        // Persist format_brief on brain (preserving existing brain fields)
+        await upsertBrain({
+          data: {
+            client_id: c!.id,
+            ...brain,
+            audience: parseJson(brain.audience),
+            brand_keywords: parseJson(brain.brand_keywords),
+            tone_keywords: parseJson(brain.tone_keywords),
+            trust_points: parseJson(brain.trust_points),
+            services: parseJson(brain.services),
+            partners: parseJson(brain.partners),
+            faq: parseJson(brain.faq),
+            format_brief: formatBrief,
           },
         });
       }
@@ -311,6 +356,7 @@ function StudioEditor() {
   }
 
   const tabs: { id: Tab; label: string }[] = [
+    { id: "format", label: "Format" },
     { id: "brain", label: "Client Brain" },
     { id: "sections", label: "Sections" },
     { id: "recipe", label: "Site Recipe (avansert)" },
