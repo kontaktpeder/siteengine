@@ -1,18 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
-import { z } from "zod";
 import { SiteShell } from "@/components/site/SiteShell";
 import { buildArchetypeSliceFixture } from "@/lib/fixtures/archetype-slice";
 
-const searchSchema = z.object({
-  archetype: fallback(
-    z.enum(["nonprofit_documentary", "food_popup_editorial"]),
-    "nonprofit_documentary",
-  ).default("nonprofit_documentary"),
-});
+type SliceArchetype = "nonprofit_documentary" | "food_popup_editorial";
 
 export const Route = createFileRoute("/dev/archetype-slice")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: (search: Record<string, unknown>) => {
+    const a = search.archetype;
+    const archetype: SliceArchetype =
+      a === "food_popup_editorial" ? "food_popup_editorial" : "nonprofit_documentary";
+    return { archetype };
+  },
   component: ArchetypeSliceDev,
 });
 
