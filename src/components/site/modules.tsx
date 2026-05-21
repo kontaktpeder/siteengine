@@ -784,13 +784,46 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
       ? "strong"
       : resolved.ctaVariant === "soft-card"
         ? "soft"
-        : section.variant || "strong";
+        : resolved.ctaVariant === "food_drop_cta"
+          ? "food_drop"
+          : section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
   const pad = resolved.sectionClass;
+
+  if (variant === "food_drop") {
+    return (
+      <Container
+        id={sectionAnchor(section) ?? "kontakt"}
+        bg={section.background_style}
+        surface={resolved.sectionSurfaceClass}
+        className={pad}
+      >
+        <div className="max-w-2xl">
+          {section.eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{section.eyebrow}</Eyebrow>
+          ) : null}
+          {section.title ? (
+            <h2 className={`${resolved.headlineClass} text-background`}>{section.title}</h2>
+          ) : null}
+          {section.subtitle ? (
+            <p className="mt-4 max-w-xl text-base text-background/80">{section.subtitle}</p>
+          ) : null}
+          {primary ? (
+            <div className="mt-8">
+              <a href={primary.href} className={resolved.primaryButtonClass}>
+                {primary.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </Container>
+    );
+  }
+
 
   if (variant === "soft") {
     return (
