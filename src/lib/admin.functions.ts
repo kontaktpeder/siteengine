@@ -238,6 +238,8 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       rhythm_strategy?: string | null;
       compression_policy?: string | null;
       creative_direction?: string | null;
+      page_template?: string | null;
+      visual_tone?: string | null;
     }) => input,
   )
   .handler(async ({ data }) => {
