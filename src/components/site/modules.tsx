@@ -536,7 +536,16 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
       className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
-        {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
+        {section.eyebrow ? (
+          <Eyebrow
+            dark={dark}
+            className={
+              resolved.presentation === "food_menu_grid" ? resolved.eyebrowClass : undefined
+            }
+          >
+            {section.eyebrow}
+          </Eyebrow>
+        ) : null}
         {section.title ? <h2 className={resolved.headlineClass}>{section.title}</h2> : null}
         {section.subtitle ? (
           <p className={`${resolved.introClass} ${dark ? "text-background/80" : ""}`}>
