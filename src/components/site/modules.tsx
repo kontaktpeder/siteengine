@@ -257,13 +257,8 @@ function HeroModule({ section, brain, site }: ModuleProps) {
   const isSplit = resolved.heroLayout === "split-portrait";
   const isCentered = resolved.heroLayout === "centered";
   const isStacked = resolved.heroLayout === "stacked-full";
-  const cta = resolved.settings.ctaIntensity;
-  const primaryClass =
-    cta === "strong"
-      ? "inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:opacity-90"
-      : cta === "soft"
-        ? "inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-        : "inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90";
+  const primaryClass = resolved.primaryButtonClass;
+  const isFood = resolved.presentation === "food_hero_drop";
 
   return (
     <Container
@@ -273,15 +268,21 @@ function HeroModule({ section, brain, site }: ModuleProps) {
     >
       <div
         className={
-          isSplit
-            ? "grid items-center gap-12 md:grid-cols-2"
-            : isCentered
-              ? "mx-auto max-w-3xl text-center"
-              : "max-w-4xl"
+          isFood
+            ? "max-w-3xl"
+            : isSplit
+              ? "grid items-center gap-12 md:grid-cols-2"
+              : isCentered
+                ? "mx-auto max-w-3xl text-center"
+                : "max-w-4xl"
         }
       >
         <div>
-          {eyebrow ? <Eyebrow dark={dark}>{eyebrow}</Eyebrow> : null}
+          {eyebrow ? (
+            <Eyebrow dark={dark} className={isFood ? resolved.eyebrowClass : undefined}>
+              {eyebrow}
+            </Eyebrow>
+          ) : null}
           <h1 className={resolved.headlineClass}>{title}</h1>
           {subtitle ? (
             <p
@@ -292,7 +293,7 @@ function HeroModule({ section, brain, site }: ModuleProps) {
               {subtitle}
             </p>
           ) : null}
-          {(primary || secondary) && (
+          {(primary || (secondary && !isFood)) && (
             <div
               className={`mt-10 flex flex-wrap gap-3 ${isCentered ? "justify-center" : ""}`}
             >
@@ -301,7 +302,9 @@ function HeroModule({ section, brain, site }: ModuleProps) {
                   {primary.label}
                 </a>
               ) : null}
-              {secondary ? <GhostButton href={secondary.href}>{secondary.label}</GhostButton> : null}
+              {secondary && !isFood ? (
+                <GhostButton href={secondary.href}>{secondary.label}</GhostButton>
+              ) : null}
             </div>
           )}
         </div>
