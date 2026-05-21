@@ -169,15 +169,17 @@ function Container({
   id,
   className = "",
   bg,
+  surface,
 }: {
   children: React.ReactNode;
   id?: string;
   className?: string;
   bg?: string | null;
+  surface?: string;
 }) {
   const wrapper = bgClasses(bg);
   return (
-    <section id={id} className={`w-full ${wrapper}`}>
+    <section id={id} className={`w-full ${wrapper} ${surface ?? ""}`}>
       <div className={`mx-auto w-full max-w-6xl px-6 md:px-10 ${className}`}>
         {children}
       </div>
@@ -185,7 +187,16 @@ function Container({
   );
 }
 
-function Eyebrow({ children, dark }: { children: React.ReactNode; dark?: boolean }) {
+function Eyebrow({
+  children,
+  dark,
+  className,
+}: {
+  children: React.ReactNode;
+  dark?: boolean;
+  className?: string;
+}) {
+  if (className) return <span className={className}>{children}</span>;
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider ${
