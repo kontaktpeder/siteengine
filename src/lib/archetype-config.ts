@@ -243,26 +243,6 @@ export function getArchetypeFromSite(
   return "neutral";
 }
 
-export function getArchetypeFromSite(
-  recipe:
-    | {
-        archetype?: string | null;
-        site_type?: string | null;
-        module_strategy?: unknown;
-      }
-    | null,
-  brain?: Record<string, unknown> | null,
-): SiteArchetype {
-  const ms = (recipe?.module_strategy ?? null) as Record<string, unknown> | null;
-  const explicit =
-    (recipe as { archetype?: string | null } | null)?.archetype ?? ms?.archetype;
-  if (isSiteArchetype(explicit)) return explicit;
-  if (recipe?.site_type === "food_brand" || recipe?.site_type === "restaurant")
-    return "food_popup_editorial";
-  if (recipe?.site_type === "nonprofit") return "nonprofit_documentary";
-  if (brain) return inferArchetypeFromBrain(brain);
-  return "neutral";
-}
 
 export function getArchetypeConfig(a: SiteArchetype): ArchetypeConfig {
   return ARCHETYPE_CONFIGS[a] ?? ARCHETYPE_CONFIGS.neutral;
