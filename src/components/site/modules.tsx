@@ -684,7 +684,7 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-  const pad = layoutFor(section, site).root;
+  const pad = resolved.sectionClass;
 
   if (variant === "soft") {
     return (
