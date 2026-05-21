@@ -106,7 +106,15 @@ export function SiteShell({ data }: { data: SiteData }) {
   const nav = (Array.isArray(recipe?.navigation) ? recipe?.navigation : []) as unknown as NavItem[];
   const footer = (recipe?.footer ?? {}) as unknown as { tagline?: string; email?: string };
   const brain = data.brain;
-  const theme = (data.client.theme ?? {}) as ThemeTokens;
+  const archetype = getArchetypeFromSite(
+    recipe as unknown as Record<string, unknown> | null,
+    brain as unknown as Record<string, unknown> | null,
+  );
+  const archetypeCfg = getArchetypeConfig(archetype);
+  const theme = mergeArchetypeTheme(
+    archetypeCfg.default_theme,
+    (data.client.theme ?? {}) as ThemeTokens,
+  );
   const style = themeToCssVars(theme);
   const sections = data.sections.length ? data.sections : buildFallbackSections(data);
   const fontClass =
