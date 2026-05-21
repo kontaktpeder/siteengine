@@ -242,7 +242,9 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 /* ---------- HERO ---------- */
 
 function HeroModule({ section, brain, site }: ModuleProps) {
-  const dark = isDarkBg(section.background_style);
+  const resolved = useResolved(section, site);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
   const eyebrow = section.eyebrow ?? null;
@@ -251,19 +253,58 @@ function HeroModule({ section, brain, site }: ModuleProps) {
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-  const resolved = useResolved(section, site);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
+  const isFood = resolved.presentation === "food_hero_drop";
+  const isProductFirst =
+    resolved.settings.heroMode === "product_first" && !!imageUrl;
   const isSplit = resolved.heroLayout === "split-portrait";
   const isCentered = resolved.heroLayout === "centered";
   const isStacked = resolved.heroLayout === "stacked-full";
   const primaryClass = resolved.primaryButtonClass;
-  const isFood = resolved.presentation === "food_hero_drop";
+
+  // ===== Food product-first hero: image dominates first viewport, text overlays bottom
+  if (isProductFirst) {
+    const alt = settings.image_alt ?? section.title ?? "";
+    return (
+      <section
+        id={sectionAnchor(section)}
+        className="relative w-full overflow-hidden bg-foreground"
+      >
+        <img
+          src={imageUrl!}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover object-[center_45%]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+        <div className="relative mx-auto flex min-h-[60vh] w-full max-w-6xl flex-col justify-end px-6 py-12 md:min-h-[72vh] md:px-10 md:py-16">
+          {eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{eyebrow}</Eyebrow>
+          ) : null}
+          <h1 className={`${resolved.headlineClass} max-w-3xl text-background`}>
+            {title}
+          </h1>
+          {subtitle ? (
+            <p className="mt-5 max-w-xl text-base text-background/85 md:text-lg">
+              {subtitle}
+            </p>
+          ) : null}
+          {primary ? (
+            <div className="mt-8">
+              <a href={primary.href} className={primaryClass}>
+                {primary.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <Container
       id={sectionAnchor(section)}
-      bg={section.background_style}
+      bg={bg}
       className={resolved.sectionClass}
     >
       <div
