@@ -12,31 +12,43 @@ export interface SectionRendererSettings {
 }
 
 export type HeroLayout = "split-portrait" | "stacked-full" | "centered";
-export type CtaVariant = "soft-card" | "strong-band" | "balanced-card";
+export type CtaVariant = "soft-card" | "strong-band" | "balanced-card" | "food_drop_cta";
 export type GridDensity = "airy" | "balanced" | "compact";
+
+export type ModulePresentation =
+  | "nonprofit_default"
+  | "food_hero_drop"
+  | "food_menu_grid"
+  | "food_story_snippet"
+  | "food_offer_strip"
+  | "food_audience_insider"
+  | "food_drop_cta";
+
+export type TypographyMode = "editorial_serif" | "brand_sans";
+export type SurfaceTone = "calm_cream" | "warm_cream" | "dark_espresso";
+export type AccentStyle = "mint" | "tomato" | "neutral";
 
 export interface ResolvedRenderer {
   archetype: SiteArchetype;
   settings: Required<SectionRendererSettings>;
-  /** Outer <section> classes */
   sectionClass: string;
-  /** Inner container wrapper */
   containerClass: string;
   heroLayout: HeroLayout;
   ctaVariant: CtaVariant;
   gridDensity: GridDensity;
-  /** Tailwind aspect-* class for hero media */
   imageAspect: string;
-  /** Card classes for services grid items */
   cardClass: string;
-  /** Media wrapper classes */
   mediaClass: string;
-  /** Headline classes */
   headlineClass: string;
-  /** Intro / lead paragraph classes */
   introClass: string;
-  /** Tailwind theme accent (unused as class — provided for callers) */
   theme: ThemeTokens;
+  presentation: ModulePresentation;
+  typographyMode: TypographyMode;
+  surfaceTone: SurfaceTone;
+  accentStyle: AccentStyle;
+  eyebrowClass: string;
+  primaryButtonClass: string;
+  sectionSurfaceClass: string;
 }
 
 function mergeSettings(
