@@ -12,31 +12,43 @@ export interface SectionRendererSettings {
 }
 
 export type HeroLayout = "split-portrait" | "stacked-full" | "centered";
-export type CtaVariant = "soft-card" | "strong-band" | "balanced-card";
+export type CtaVariant = "soft-card" | "strong-band" | "balanced-card" | "food_drop_cta";
 export type GridDensity = "airy" | "balanced" | "compact";
+
+export type ModulePresentation =
+  | "nonprofit_default"
+  | "food_hero_drop"
+  | "food_menu_grid"
+  | "food_story_snippet"
+  | "food_offer_strip"
+  | "food_audience_insider"
+  | "food_drop_cta";
+
+export type TypographyMode = "editorial_serif" | "brand_sans";
+export type SurfaceTone = "calm_cream" | "warm_cream" | "dark_espresso";
+export type AccentStyle = "mint" | "tomato" | "neutral";
 
 export interface ResolvedRenderer {
   archetype: SiteArchetype;
   settings: Required<SectionRendererSettings>;
-  /** Outer <section> classes */
   sectionClass: string;
-  /** Inner container wrapper */
   containerClass: string;
   heroLayout: HeroLayout;
   ctaVariant: CtaVariant;
   gridDensity: GridDensity;
-  /** Tailwind aspect-* class for hero media */
   imageAspect: string;
-  /** Card classes for services grid items */
   cardClass: string;
-  /** Media wrapper classes */
   mediaClass: string;
-  /** Headline classes */
   headlineClass: string;
-  /** Intro / lead paragraph classes */
   introClass: string;
-  /** Tailwind theme accent (unused as class — provided for callers) */
   theme: ThemeTokens;
+  presentation: ModulePresentation;
+  typographyMode: TypographyMode;
+  surfaceTone: SurfaceTone;
+  accentStyle: AccentStyle;
+  eyebrowClass: string;
+  primaryButtonClass: string;
+  sectionSurfaceClass: string;
 }
 
 function mergeSettings(
@@ -140,10 +152,24 @@ function gridContainerFor(density: GridDensity): string {
   }
 }
 
-function headlineFor(archetype: SiteArchetype, moduleType: string): string {
+function headlineFor(
+  archetype: SiteArchetype,
+  moduleType: string,
+  presentation: ModulePresentation,
+): string {
+  if (presentation === "food_hero_drop") {
+    return "mt-6 text-4xl md:text-6xl font-sans font-semibold leading-[1.05] tracking-tight";
+  }
+  if (presentation === "food_menu_grid" || presentation === "food_story_snippet") {
+    return "mt-3 text-3xl md:text-4xl font-sans font-semibold tracking-tight";
+  }
+  if (presentation === "food_drop_cta") {
+    return "mt-3 text-3xl md:text-5xl font-sans font-semibold tracking-tight";
+  }
+  if (presentation === "food_offer_strip" || presentation === "food_audience_insider") {
+    return "mt-3 text-2xl md:text-3xl font-sans font-semibold tracking-tight";
+  }
   if (moduleType === "hero") {
-    if (archetype === "food_popup_editorial")
-      return "mt-6 text-5xl md:text-7xl font-serif leading-[1.02] tracking-tight";
     if (archetype === "nonprofit_documentary")
       return "mt-6 text-5xl md:text-8xl leading-[1.05]";
     return "mt-6 text-5xl md:text-7xl leading-[1.05]";
@@ -151,12 +177,81 @@ function headlineFor(archetype: SiteArchetype, moduleType: string): string {
   return "mt-3 text-3xl md:text-5xl";
 }
 
-function introFor(archetype: SiteArchetype): string {
-  if (archetype === "food_popup_editorial")
-    return "mt-5 max-w-xl text-lg md:text-xl text-muted-foreground";
+function introFor(archetype: SiteArchetype, presentation: ModulePresentation): string {
+  if (presentation === "food_hero_drop")
+    return "mt-5 max-w-xl text-base md:text-lg text-muted-foreground";
+  if (
+    presentation === "food_menu_grid" ||
+    presentation === "food_story_snippet" ||
+    presentation === "food_drop_cta"
+  )
+    return "mt-4 max-w-2xl text-base md:text-lg text-muted-foreground";
   if (archetype === "nonprofit_documentary")
     return "mt-6 max-w-2xl text-lg md:text-xl leading-relaxed text-muted-foreground";
   return "mt-6 max-w-2xl text-lg text-muted-foreground";
+}
+
+export function presentationFor(
+  moduleType: string,
+  archetype: SiteArchetype,
+): ModulePresentation {
+  if (archetype !== "food_popup_editorial") return "nonprofit_default";
+  switch (moduleType) {
+    case "hero":
+      return "food_hero_drop";
+    case "services_grid":
+      return "food_menu_grid";
+    case "mission":
+      return "food_story_snippet";
+    case "trust_strip":
+      return "food_offer_strip";
+    case "proof":
+      return "food_audience_insider";
+    case "contact_cta":
+      return "food_drop_cta";
+    default:
+      return "nonprofit_default";
+  }
+}
+
+function eyebrowClassFor(presentation: ModulePresentation): string {
+  if (
+    presentation === "food_hero_drop" ||
+    presentation === "food_menu_grid" ||
+    presentation === "food_story_snippet" ||
+    presentation === "food_offer_strip" ||
+    presentation === "food_drop_cta"
+  ) {
+    return "inline-flex items-center rounded-sm bg-foreground px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-background";
+  }
+  if (presentation === "food_audience_insider") {
+    return "inline-flex items-center rounded-sm bg-background/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-background";
+  }
+  return "inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-medium uppercase tracking-wider text-secondary-foreground";
+}
+
+function primaryButtonClassFor(presentation: ModulePresentation, intensity: CtaIntensity): string {
+  if (
+    presentation === "food_hero_drop" ||
+    presentation === "food_drop_cta" ||
+    presentation === "food_menu_grid"
+  ) {
+    return "inline-flex items-center justify-center rounded-sm bg-primary px-7 py-4 text-sm font-semibold uppercase tracking-wider text-primary-foreground transition hover:opacity-90";
+  }
+  if (intensity === "strong") {
+    return "inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:opacity-90";
+  }
+  if (intensity === "soft") {
+    return "inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90";
+  }
+  return "inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90";
+}
+
+function sectionSurfaceClassFor(presentation: ModulePresentation): string {
+  if (presentation === "food_audience_insider" || presentation === "food_drop_cta") {
+    return "bg-foreground text-background";
+  }
+  return "";
 }
 
 export function resolveRenderer(
@@ -166,10 +261,27 @@ export function resolveRenderer(
 ): ResolvedRenderer {
   const raw = (section.settings as Record<string, unknown> | null)?.renderer;
   const settings = mergeSettings(raw, archetype);
-  const heroLayout = heroLayoutFor(archetype, section);
-  const ctaVariant = ctaVariantFor(archetype);
+  const presentation = presentationFor(section.module_type, archetype);
+  const heroLayout: HeroLayout =
+    presentation === "food_hero_drop" ? "stacked-full" : heroLayoutFor(archetype, section);
+  const ctaVariant: CtaVariant =
+    presentation === "food_drop_cta" ? "food_drop_cta" : ctaVariantFor(archetype);
   const gridDensity = gridDensityFor(archetype);
   const imageAspect = imageAspectFor(archetype, section.module_type, settings.imageScale);
+  const typographyMode: TypographyMode =
+    archetype === "food_popup_editorial" ? "brand_sans" : "editorial_serif";
+  const surfaceTone: SurfaceTone =
+    archetype === "food_popup_editorial"
+      ? "warm_cream"
+      : archetype === "nonprofit_documentary"
+        ? "calm_cream"
+        : "calm_cream";
+  const accentStyle: AccentStyle =
+    archetype === "food_popup_editorial"
+      ? "tomato"
+      : archetype === "nonprofit_documentary"
+        ? "mint"
+        : "neutral";
 
   return {
     archetype,
@@ -180,10 +292,24 @@ export function resolveRenderer(
     ctaVariant,
     gridDensity,
     imageAspect,
-    cardClass: cardClassFor(gridDensity),
-    mediaClass: `${imageAspect} w-full rounded-3xl object-cover`,
-    headlineClass: headlineFor(archetype, section.module_type),
-    introClass: introFor(archetype),
+    cardClass:
+      presentation === "food_menu_grid"
+        ? "rounded-lg border border-border bg-card p-5"
+        : cardClassFor(gridDensity),
+    mediaClass: `${imageAspect} w-full ${
+      presentation === "food_hero_drop" || presentation === "food_menu_grid"
+        ? "rounded-md"
+        : "rounded-3xl"
+    } object-cover`,
+    headlineClass: headlineFor(archetype, section.module_type, presentation),
+    introClass: introFor(archetype, presentation),
     theme,
+    presentation,
+    typographyMode,
+    surfaceTone,
+    accentStyle,
+    eyebrowClass: eyebrowClassFor(presentation),
+    primaryButtonClass: primaryButtonClassFor(presentation, settings.ctaIntensity),
+    sectionSurfaceClass: sectionSurfaceClassFor(presentation),
   };
 }

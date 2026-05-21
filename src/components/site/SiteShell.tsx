@@ -1,5 +1,10 @@
 import type { SiteData, ThemeTokens } from "@/lib/site-types";
 import { renderModule } from "./modules";
+import {
+  getArchetypeConfig,
+  getArchetypeFromSite,
+  mergeArchetypeTheme,
+} from "@/lib/archetype-config";
 
 interface NavItem {
   label: string;
@@ -83,6 +88,10 @@ function themeToCssVars(theme: ThemeTokens | undefined | null): React.CSSPropert
   if (!theme) return {};
   const vars: Record<string, string> = {};
   if (theme.primaryColor) vars["--primary"] = theme.primaryColor;
+  if (theme.primaryForegroundColor) vars["--primary-foreground"] = theme.primaryForegroundColor;
+  if (theme.secondaryColor) vars["--secondary"] = theme.secondaryColor;
+  if (theme.secondaryForegroundColor) vars["--secondary-foreground"] = theme.secondaryForegroundColor;
+  if (theme.accentColor) vars["--accent"] = theme.accentColor;
   if (theme.backgroundColor) vars["--background"] = theme.backgroundColor;
   if (theme.surfaceColor) vars["--card"] = theme.surfaceColor;
   if (theme.textColor) vars["--foreground"] = theme.textColor;
@@ -97,7 +106,15 @@ export function SiteShell({ data }: { data: SiteData }) {
   const nav = (Array.isArray(recipe?.navigation) ? recipe?.navigation : []) as unknown as NavItem[];
   const footer = (recipe?.footer ?? {}) as unknown as { tagline?: string; email?: string };
   const brain = data.brain;
-  const theme = (data.client.theme ?? {}) as ThemeTokens;
+  const archetype = getArchetypeFromSite(
+    recipe as unknown as Record<string, unknown> | null,
+    brain as unknown as Record<string, unknown> | null,
+  );
+  const archetypeCfg = getArchetypeConfig(archetype);
+  const theme = mergeArchetypeTheme(
+    archetypeCfg.default_theme,
+    (data.client.theme ?? {}) as ThemeTokens,
+  );
   const style = themeToCssVars(theme);
   const sections = data.sections.length ? data.sections : buildFallbackSections(data);
   const fontClass =

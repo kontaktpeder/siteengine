@@ -109,13 +109,18 @@ export const ARCHETYPE_CONFIGS: Record<SiteArchetype, ArchetypeConfig> = {
       "aktiviteter for alle",
     ],
     default_theme: {
-      primaryColor: "oklch(0.52 0.19 35)",
-      backgroundColor: "oklch(0.97 0.03 75)",
+      primaryColor: "oklch(0.58 0.20 35)",        // tomato / burnt orange — CTA
+      primaryForegroundColor: "oklch(0.98 0.01 80)",
+      secondaryColor: "oklch(0.92 0.05 75)",      // warm sand (NOT mint)
+      secondaryForegroundColor: "oklch(0.20 0.04 40)",
+      accentColor: "oklch(0.18 0.04 40)",         // espresso accent for eyebrows
+      backgroundColor: "oklch(0.97 0.03 75)",     // warm cream
       surfaceColor: "oklch(1 0 0)",
-      textColor: "oklch(0.18 0.04 40)",
+      textColor: "oklch(0.18 0.04 40)",           // espresso ink
       borderColor: "oklch(0.88 0.05 55)",
-      radius: "1.25rem",
-      fontStyle: "serif",
+      mutedColor: "oklch(0.45 0.04 40)",
+      radius: "0.5rem",
+      fontStyle: "sans",
     },
     design_direction: "warm_editorial_food",
     recipe_type: "conversion_food",
@@ -172,4 +177,16 @@ export function getArchetypeFromSite(
 
 export function getArchetypeConfig(a: SiteArchetype): ArchetypeConfig {
   return ARCHETYPE_CONFIGS[a] ?? ARCHETYPE_CONFIGS.neutral;
+}
+
+/**
+ * Archetype theme OVERRIDES client.theme color tokens.
+ * Client theme can still contribute when archetype does not specify a value.
+ */
+export function mergeArchetypeTheme(
+  archetypeTheme: ThemeTokens,
+  clientTheme: ThemeTokens | null | undefined,
+): ThemeTokens {
+  const c = clientTheme ?? {};
+  return { ...c, ...archetypeTheme };
 }

@@ -169,15 +169,17 @@ function Container({
   id,
   className = "",
   bg,
+  surface,
 }: {
   children: React.ReactNode;
   id?: string;
   className?: string;
   bg?: string | null;
+  surface?: string;
 }) {
   const wrapper = bgClasses(bg);
   return (
-    <section id={id} className={`w-full ${wrapper}`}>
+    <section id={id} className={`w-full ${wrapper} ${surface ?? ""}`}>
       <div className={`mx-auto w-full max-w-6xl px-6 md:px-10 ${className}`}>
         {children}
       </div>
@@ -185,7 +187,16 @@ function Container({
   );
 }
 
-function Eyebrow({ children, dark }: { children: React.ReactNode; dark?: boolean }) {
+function Eyebrow({
+  children,
+  dark,
+  className,
+}: {
+  children: React.ReactNode;
+  dark?: boolean;
+  className?: string;
+}) {
+  if (className) return <span className={className}>{children}</span>;
   return (
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider ${
@@ -246,13 +257,8 @@ function HeroModule({ section, brain, site }: ModuleProps) {
   const isSplit = resolved.heroLayout === "split-portrait";
   const isCentered = resolved.heroLayout === "centered";
   const isStacked = resolved.heroLayout === "stacked-full";
-  const cta = resolved.settings.ctaIntensity;
-  const primaryClass =
-    cta === "strong"
-      ? "inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:opacity-90"
-      : cta === "soft"
-        ? "inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-        : "inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90";
+  const primaryClass = resolved.primaryButtonClass;
+  const isFood = resolved.presentation === "food_hero_drop";
 
   return (
     <Container
@@ -262,15 +268,21 @@ function HeroModule({ section, brain, site }: ModuleProps) {
     >
       <div
         className={
-          isSplit
-            ? "grid items-center gap-12 md:grid-cols-2"
-            : isCentered
-              ? "mx-auto max-w-3xl text-center"
-              : "max-w-4xl"
+          isFood
+            ? "max-w-3xl"
+            : isSplit
+              ? "grid items-center gap-12 md:grid-cols-2"
+              : isCentered
+                ? "mx-auto max-w-3xl text-center"
+                : "max-w-4xl"
         }
       >
         <div>
-          {eyebrow ? <Eyebrow dark={dark}>{eyebrow}</Eyebrow> : null}
+          {eyebrow ? (
+            <Eyebrow dark={dark} className={isFood ? resolved.eyebrowClass : undefined}>
+              {eyebrow}
+            </Eyebrow>
+          ) : null}
           <h1 className={resolved.headlineClass}>{title}</h1>
           {subtitle ? (
             <p
@@ -281,7 +293,7 @@ function HeroModule({ section, brain, site }: ModuleProps) {
               {subtitle}
             </p>
           ) : null}
-          {(primary || secondary) && (
+          {(primary || (secondary && !isFood)) && (
             <div
               className={`mt-10 flex flex-wrap gap-3 ${isCentered ? "justify-center" : ""}`}
             >
@@ -290,7 +302,9 @@ function HeroModule({ section, brain, site }: ModuleProps) {
                   {primary.label}
                 </a>
               ) : null}
-              {secondary ? <GhostButton href={secondary.href}>{secondary.label}</GhostButton> : null}
+              {secondary && !isFood ? (
+                <GhostButton href={secondary.href}>{secondary.label}</GhostButton>
+              ) : null}
             </div>
           )}
         </div>
@@ -322,6 +336,27 @@ function HeroModule({ section, brain, site }: ModuleProps) {
 function TrustStripModule({ section, brain, site }: ModuleProps) {
   const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
+  const resolved = useResolved(section, site);
+  if (resolved.presentation === "food_offer_strip") {
+    return (
+      <Container
+        id={sectionAnchor(section)}
+        bg={section.background_style}
+        className={resolved.sectionClass}
+      >
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-6 text-sm">
+          {items.map((it, i) => (
+            <span key={i} className="font-medium text-foreground">
+              <span className="text-primary">•</span> {it.label}
+              {it.description ? (
+                <span className="ml-1 text-muted-foreground">— {it.description}</span>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      </Container>
+    );
+  }
   return (
     <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="grid grid-cols-2 gap-x-8 gap-y-6 rounded-3xl border border-border bg-card p-8 md:grid-cols-4">
@@ -341,8 +376,9 @@ function TrustStripModule({ section, brain, site }: ModuleProps) {
 /* ---------- MISSION ---------- */
 
 function MissionModule({ section, brain, site }: ModuleProps) {
+  const resolved = useResolved(section, site);
   const variant = section.variant || "simple";
-  const eyebrow = section.eyebrow ?? section.title ?? "Vårt oppdrag";
+  const eyebrow = section.eyebrow ?? section.title ?? null;
   const cta = resolveCta(section, brain);
   const dark = isDarkBg(section.background_style);
   const depth = getContentDepth(section);
@@ -353,11 +389,46 @@ function MissionModule({ section, brain, site }: ModuleProps) {
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
   const pad = paddingFor(section, site);
 
+  if (resolved.presentation === "food_story_snippet") {
+    const headline = section.title ?? brain?.mission ?? "";
+    if (!headline && !section.subtitle && !brain?.flagship_story) return null;
+    return (
+      <Container
+        id={sectionAnchor(section) ?? "om"}
+        bg={section.background_style}
+        className={resolved.sectionClass}
+      >
+        <div className="max-w-2xl">
+          {eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{eyebrow}</Eyebrow>
+          ) : null}
+          {headline ? <h2 className={resolved.headlineClass}>{headline}</h2> : null}
+          {section.subtitle ? (
+            <p className={resolved.introClass}>{section.subtitle}</p>
+          ) : brain?.flagship_story ? (
+            <p className={resolved.introClass}>{brain.flagship_story}</p>
+          ) : null}
+          {cta ? (
+            <div className="mt-8">
+              <a href={cta.href} className={resolved.primaryButtonClass}>
+                {cta.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </Container>
+    );
+  }
+
+  const fallbackEyebrow = eyebrow ?? "Vårt oppdrag";
+
+
+
   if (variant === "cards") {
     return (
       <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
         <div className={proseDepthClass(depth)}>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
+          <Eyebrow dark={dark}>{fallbackEyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
@@ -396,7 +467,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
     <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
       <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
+          <Eyebrow dark={dark}>{fallbackEyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
@@ -465,7 +536,16 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
       className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
-        {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
+        {section.eyebrow ? (
+          <Eyebrow
+            dark={dark}
+            className={
+              resolved.presentation === "food_menu_grid" ? resolved.eyebrowClass : undefined
+            }
+          >
+            {section.eyebrow}
+          </Eyebrow>
+        ) : null}
         {section.title ? <h2 className={resolved.headlineClass}>{section.title}</h2> : null}
         {section.subtitle ? (
           <p className={`${resolved.introClass} ${dark ? "text-background/80" : ""}`}>
@@ -597,10 +677,45 @@ function PartnersModule({ section, brain, site }: ModuleProps) {
 function ProofModule({ section, brain, site }: ModuleProps) {
   const items = normalizeAudience(brain?.audience);
   if (!items.length && !brain?.long_description) return null;
+  const resolved = useResolved(section, site);
   const dark = isDarkBg(section.background_style);
   const pad = paddingFor(section, site);
   const imageUrl = sectionImageUrl(section);
   const settings = (section.settings ?? {}) as { image_alt?: string };
+
+  if (resolved.presentation === "food_audience_insider") {
+    return (
+      <Container
+        id={sectionAnchor(section)}
+        bg={section.background_style}
+        surface={resolved.sectionSurfaceClass}
+        className={resolved.sectionClass}
+      >
+        <div className="max-w-2xl">
+          <Eyebrow className={resolved.eyebrowClass}>
+            {section.eyebrow ?? "For deg som"}
+          </Eyebrow>
+          <h2 className={`${resolved.headlineClass} text-background`}>
+            {section.title ?? "Smaker som finner sitt publikum."}
+          </h2>
+          {section.subtitle ? (
+            <p className="mt-4 max-w-xl text-base text-background/80">{section.subtitle}</p>
+          ) : null}
+        </div>
+        <div className="mt-8 flex flex-wrap gap-2">
+          {items.map((a, i) => (
+            <span
+              key={i}
+              className="rounded-md bg-background/10 px-3 py-1.5 text-sm text-background"
+            >
+              {a.label}
+            </span>
+          ))}
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container id={sectionAnchor(section)} bg={section.background_style} className={pad}>
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
@@ -678,13 +793,46 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
       ? "strong"
       : resolved.ctaVariant === "soft-card"
         ? "soft"
-        : section.variant || "strong";
+        : resolved.ctaVariant === "food_drop_cta"
+          ? "food_drop"
+          : section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
   const pad = resolved.sectionClass;
+
+  if (variant === "food_drop") {
+    return (
+      <Container
+        id={sectionAnchor(section) ?? "kontakt"}
+        bg={section.background_style}
+        surface={resolved.sectionSurfaceClass}
+        className={pad}
+      >
+        <div className="max-w-2xl">
+          {section.eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{section.eyebrow}</Eyebrow>
+          ) : null}
+          {section.title ? (
+            <h2 className={`${resolved.headlineClass} text-background`}>{section.title}</h2>
+          ) : null}
+          {section.subtitle ? (
+            <p className="mt-4 max-w-xl text-base text-background/80">{section.subtitle}</p>
+          ) : null}
+          {primary ? (
+            <div className="mt-8">
+              <a href={primary.href} className={resolved.primaryButtonClass}>
+                {primary.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </Container>
+    );
+  }
+
 
   if (variant === "soft") {
     return (
