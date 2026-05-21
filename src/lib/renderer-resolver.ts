@@ -64,19 +64,39 @@ export interface ResolvedRenderer {
 function mergeSettings(
   raw: unknown,
   archetype: SiteArchetype,
+  moduleType: string,
 ): Required<SectionRendererSettings> {
   const r = (raw ?? {}) as SectionRendererSettings;
   const defaultsByArchetype: Record<SiteArchetype, Required<SectionRendererSettings>> = {
-    neutral: { pacing: "balanced", imageScale: "medium", ctaIntensity: "normal" },
+    neutral: {
+      pacing: "balanced",
+      imageScale: "medium",
+      ctaIntensity: "normal",
+      heroMode: "copy_first",
+      mediaProminence: "inline",
+      storyWeight: "manifest",
+      menuStyle: "info_cards",
+      faqWeight: "normal",
+    },
     nonprofit_documentary: {
       pacing: "spacious",
       imageScale: "large",
       ctaIntensity: "soft",
+      heroMode: "copy_first",
+      mediaProminence: "inline",
+      storyWeight: "manifest",
+      menuStyle: "info_cards",
+      faqWeight: "normal",
     },
     food_popup_editorial: {
       pacing: "tight",
       imageScale: "full",
       ctaIntensity: "strong",
+      heroMode: moduleType === "hero" ? "product_first" : "copy_first",
+      mediaProminence: moduleType === "hero" ? "hero_dominant" : "inline",
+      storyWeight: "snippet",
+      menuStyle: "signature_dishes",
+      faqWeight: "compact_footer",
     },
   };
   const d = defaultsByArchetype[archetype];
@@ -84,6 +104,11 @@ function mergeSettings(
     pacing: r.pacing ?? d.pacing,
     imageScale: r.imageScale ?? d.imageScale,
     ctaIntensity: r.ctaIntensity ?? d.ctaIntensity,
+    heroMode: r.heroMode ?? d.heroMode,
+    mediaProminence: r.mediaProminence ?? d.mediaProminence,
+    storyWeight: r.storyWeight ?? d.storyWeight,
+    menuStyle: r.menuStyle ?? d.menuStyle,
+    faqWeight: r.faqWeight ?? d.faqWeight,
   };
 }
 
