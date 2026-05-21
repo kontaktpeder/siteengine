@@ -376,8 +376,9 @@ function TrustStripModule({ section, brain, site }: ModuleProps) {
 /* ---------- MISSION ---------- */
 
 function MissionModule({ section, brain, site }: ModuleProps) {
+  const resolved = useResolved(section, site);
   const variant = section.variant || "simple";
-  const eyebrow = section.eyebrow ?? section.title ?? "Vårt oppdrag";
+  const eyebrow = section.eyebrow ?? section.title ?? null;
   const cta = resolveCta(section, brain);
   const dark = isDarkBg(section.background_style);
   const depth = getContentDepth(section);
@@ -387,6 +388,41 @@ function MissionModule({ section, brain, site }: ModuleProps) {
   const showSideImage =
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
   const pad = paddingFor(section, site);
+
+  if (resolved.presentation === "food_story_snippet") {
+    const headline = section.title ?? brain?.mission ?? "";
+    if (!headline && !section.subtitle && !brain?.flagship_story) return null;
+    return (
+      <Container
+        id={sectionAnchor(section) ?? "om"}
+        bg={section.background_style}
+        className={resolved.sectionClass}
+      >
+        <div className="max-w-2xl">
+          {eyebrow ? (
+            <Eyebrow className={resolved.eyebrowClass}>{eyebrow}</Eyebrow>
+          ) : null}
+          {headline ? <h2 className={resolved.headlineClass}>{headline}</h2> : null}
+          {section.subtitle ? (
+            <p className={resolved.introClass}>{section.subtitle}</p>
+          ) : brain?.flagship_story ? (
+            <p className={resolved.introClass}>{brain.flagship_story}</p>
+          ) : null}
+          {cta ? (
+            <div className="mt-8">
+              <a href={cta.href} className={resolved.primaryButtonClass}>
+                {cta.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </Container>
+    );
+  }
+
+  const fallbackEyebrow = eyebrow ?? "Vårt oppdrag";
+
+
 
   if (variant === "cards") {
     return (
