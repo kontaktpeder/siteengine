@@ -194,6 +194,7 @@ export const upsertBrain = createServerFn({ method: "POST" })
       memorable_takeaway: (data.memorable_takeaway as string) ?? null,
       representative_scene: (data.representative_scene as string) ?? null,
       desired_feelings: (data.desired_feelings as string) ?? null,
+      format_brief: (data.format_brief ?? {}) as never,
     } as never;
 
     if (existing && existing.length) {
