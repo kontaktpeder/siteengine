@@ -208,14 +208,38 @@ export function inferArchetypeFromBrain(
 ): SiteArchetype {
   if (!brain) return "neutral";
   const st = typeof brain.site_type === "string" ? brain.site_type.toLowerCase() : "";
-  if (st === "food_brand" || st === "restaurant") return "food_popup_editorial";
-  if (st === "nonprofit") return "nonprofit_documentary";
   const hay = [brain.raw_notes, brain.short_description, brain.flagship_story]
     .filter((x): x is string => typeof x === "string")
     .join(" ")
     .toLowerCase();
-  if (/popup|street food|arancini|\bmat\b|meny|gastro/.test(hay)) return "food_popup_editorial";
+  // popup-specific signals → minimal drop page
+  if (/\bpopup\b|\bpop-up\b|limited drop|street food|instagram[- ]first|\bbatch\b/.test(hay))
+    return "food_popup_minimal";
+  if (st === "food_brand" || st === "restaurant") return "food_popup_editorial";
+  if (st === "nonprofit") return "nonprofit_documentary";
+  if (/arancini|\bmat\b|meny|gastro/.test(hay)) return "food_popup_editorial";
   if (/forening|nonprofit|frivillig|inklud/.test(hay)) return "nonprofit_documentary";
+  return "neutral";
+}
+
+export function getArchetypeFromSite(
+  recipe:
+    | {
+        archetype?: string | null;
+        site_type?: string | null;
+        module_strategy?: unknown;
+      }
+    | null,
+  brain?: Record<string, unknown> | null,
+): SiteArchetype {
+  const ms = (recipe?.module_strategy ?? null) as Record<string, unknown> | null;
+  const explicit =
+    (recipe as { archetype?: string | null } | null)?.archetype ?? ms?.archetype;
+  if (isSiteArchetype(explicit)) return explicit;
+  if (recipe?.site_type === "food_brand" || recipe?.site_type === "restaurant")
+    return "food_popup_editorial";
+  if (recipe?.site_type === "nonprofit") return "nonprofit_documentary";
+  if (brain) return inferArchetypeFromBrain(brain);
   return "neutral";
 }
 
