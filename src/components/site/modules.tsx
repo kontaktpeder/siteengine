@@ -926,7 +926,7 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section) ?? "kontakt"}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         surface={resolved.sectionSurfaceClass}
         className={pad}
       >
