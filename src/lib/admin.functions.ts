@@ -772,11 +772,16 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
 
     // 3. Recipe
     const r = suggestion.recipe;
-    const { data: existingRecipe } = await supabaseAdmin
+    const { data: existingRecipeRow } = await supabaseAdmin
       .from("site_recipes")
-      .select("id")
+      .select("*")
       .eq("client_id", client_id)
       .limit(1);
+    const existingRecipe = existingRecipeRow;
+    const existingPageTemplate =
+      (existingRecipeRow?.[0] as { page_template?: string } | undefined)?.page_template ?? null;
+    const existingVisualTone =
+      (existingRecipeRow?.[0] as { visual_tone?: string } | undefined)?.visual_tone ?? null;
     const recipePayload = {
       client_id,
       recipe_type: r.recipe_type,
