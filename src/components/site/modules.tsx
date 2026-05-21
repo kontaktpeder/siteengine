@@ -668,10 +668,45 @@ function PartnersModule({ section, brain, site }: ModuleProps) {
 function ProofModule({ section, brain, site }: ModuleProps) {
   const items = normalizeAudience(brain?.audience);
   if (!items.length && !brain?.long_description) return null;
+  const resolved = useResolved(section, site);
   const dark = isDarkBg(section.background_style);
   const pad = paddingFor(section, site);
   const imageUrl = sectionImageUrl(section);
   const settings = (section.settings ?? {}) as { image_alt?: string };
+
+  if (resolved.presentation === "food_audience_insider") {
+    return (
+      <Container
+        id={sectionAnchor(section)}
+        bg={section.background_style}
+        surface={resolved.sectionSurfaceClass}
+        className={resolved.sectionClass}
+      >
+        <div className="max-w-2xl">
+          <Eyebrow className={resolved.eyebrowClass}>
+            {section.eyebrow ?? "For deg som"}
+          </Eyebrow>
+          <h2 className={`${resolved.headlineClass} text-background`}>
+            {section.title ?? "Smaker som finner sitt publikum."}
+          </h2>
+          {section.subtitle ? (
+            <p className="mt-4 max-w-xl text-base text-background/80">{section.subtitle}</p>
+          ) : null}
+        </div>
+        <div className="mt-8 flex flex-wrap gap-2">
+          {items.map((a, i) => (
+            <span
+              key={i}
+              className="rounded-md bg-background/10 px-3 py-1.5 text-sm text-background"
+            >
+              {a.label}
+            </span>
+          ))}
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container id={sectionAnchor(section)} bg={section.background_style} className={pad}>
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
