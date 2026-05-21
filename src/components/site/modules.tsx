@@ -820,32 +820,81 @@ function ProofModule({ section, brain, site }: ModuleProps) {
 function FaqModule({ section, brain, site }: ModuleProps) {
   const items = normalizeFaq(brain?.faq);
   if (!items.length) return null;
+  const resolved = useResolved(section, site);
   const variant = section.variant || "accordion";
-  const dark = isDarkBg(section.background_style);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
+  const compact = resolved.settings.faqWeight === "compact_footer";
+  const visibleItems = compact ? items.slice(0, 3) : items;
   return (
-    <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
+    <Container
+      id={sectionAnchor(section)}
+      bg={bg}
+      className={compact ? "py-10 md:py-14" : layoutFor(section, site).root}
+    >
       <div className="max-w-2xl">
-        {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
-        {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
+        {section.eyebrow ? (
+          <Eyebrow
+            dark={dark}
+            className={compact ? "text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground" : undefined}
+          >
+            {section.eyebrow}
+          </Eyebrow>
+        ) : null}
+        {section.title ? (
+          <h2 className={compact ? "mt-2 text-2xl font-sans font-semibold" : "mt-3 text-4xl md:text-5xl"}>
+            {section.title}
+          </h2>
+        ) : null}
       </div>
       {variant === "simple" ? (
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {items.map((q, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-lg font-medium">{q.question}</div>
-              <p className="mt-2 text-muted-foreground">{q.answer}</p>
+        <div className={compact ? "mt-6 grid gap-3 md:grid-cols-2" : "mt-10 grid gap-6 md:grid-cols-2"}>
+          {visibleItems.map((q, i) => (
+            <div
+              key={i}
+              className={
+                compact
+                  ? "rounded-lg border border-border bg-card p-4"
+                  : "rounded-2xl border border-border bg-card p-6"
+              }
+            >
+              <div className={compact ? "text-sm font-medium" : "text-lg font-medium"}>{q.question}</div>
+              <p className={compact ? "mt-1 text-xs text-muted-foreground" : "mt-2 text-muted-foreground"}>
+                {q.answer}
+              </p>
             </div>
           ))}
         </div>
       ) : (
-        <div className="mt-10 divide-y divide-border rounded-3xl border border-border bg-card">
-          {items.map((q, i) => (
-            <details key={i} className="group p-6 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between gap-6 text-left text-lg font-medium">
+        <div
+          className={
+            compact
+              ? "mt-6 divide-y divide-border rounded-xl border border-border bg-card"
+              : "mt-10 divide-y divide-border rounded-3xl border border-border bg-card"
+          }
+        >
+          {visibleItems.map((q, i) => (
+            <details
+              key={i}
+              className={
+                compact
+                  ? "group p-4 [&_summary::-webkit-details-marker]:hidden"
+                  : "group p-6 [&_summary::-webkit-details-marker]:hidden"
+              }
+            >
+              <summary
+                className={
+                  compact
+                    ? "flex cursor-pointer items-center justify-between gap-4 text-left text-sm font-medium"
+                    : "flex cursor-pointer items-center justify-between gap-6 text-left text-lg font-medium"
+                }
+              >
                 {q.question}
-                <span className="text-2xl text-muted-foreground transition group-open:rotate-45">+</span>
+                <span className={compact ? "text-lg text-muted-foreground transition group-open:rotate-45" : "text-2xl text-muted-foreground transition group-open:rotate-45"}>+</span>
               </summary>
-              <p className="mt-3 text-muted-foreground">{q.answer}</p>
+              <p className={compact ? "mt-2 text-xs text-muted-foreground" : "mt-3 text-muted-foreground"}>
+                {q.answer}
+              </p>
             </details>
           ))}
         </div>
