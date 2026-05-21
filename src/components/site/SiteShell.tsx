@@ -20,7 +20,7 @@ function buildFallbackSections(data: SiteData) {
     hero: data.client.name,
     trust_strip: "Hvorfor velge oss",
     mission: "Om oss",
-    services_grid: "Våre kurs",
+    services_grid: "Tilbud",
     proof: "Hvem vi hjelper",
     faq: "Vanlige spørsmål",
     contact_cta: "Ta kontakt",
@@ -40,7 +40,7 @@ function buildFallbackSections(data: SiteData) {
   const eyebrows: Record<string, string> = {
     hero: data.client.name,
     mission: "Om oss",
-    services_grid: "Kurs",
+    services_grid: "Tilbud",
     proof: "Målgruppe",
     faq: "FAQ",
     contact_cta: "Kontakt",
@@ -49,7 +49,7 @@ function buildFallbackSections(data: SiteData) {
   const anchors: Record<string, string> = {
     hero: "top",
     mission: "om",
-    services_grid: "kurs",
+    services_grid: "tilbud",
     proof: "om",
     faq: "faq",
     contact_cta: "kontakt",
