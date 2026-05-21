@@ -3,7 +3,11 @@ import { getSiteData } from "@/lib/site.functions";
 import { EmptySiteState, SiteShell } from "@/components/site/SiteShell";
 
 export const Route = createFileRoute("/")({
-  loader: () => getSiteData({ data: {} }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    client: typeof search.client === "string" ? search.client : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ slug: search.client }),
+  loader: ({ deps }) => getSiteData({ data: { slug: deps.slug } }),
   head: ({ loaderData }) => {
     const title = loaderData?.page?.meta_title ?? loaderData?.client?.name ?? "Studio P. A. Halvorsen";
     const description =
