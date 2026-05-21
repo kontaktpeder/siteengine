@@ -15,7 +15,13 @@ export type ModuleType =
   | "proof"
   | "activities"
   | "faq"
-  | "contact_cta";
+  | "contact_cta"
+  // food_popup_minimal modules
+  | "popup_hero"
+  | "menu_preview"
+  | "story_snippet"
+  | "food_gallery"
+  | "drop_cta";
 
 export interface ThemeTokens {
   primaryColor?: string;
