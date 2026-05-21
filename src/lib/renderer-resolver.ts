@@ -332,7 +332,9 @@ export function resolveRenderer(
   // Food forbids mint surface tokens — coerce to default
   const rawBg = section.background_style ?? null;
   const effectiveBackgroundStyle: string | null =
-    archetype === "food_popup_editorial" && rawBg === "mint" ? null : rawBg;
+    (archetype === "food_popup_editorial" || archetype === "food_popup_minimal") && rawBg === "mint"
+      ? null
+      : rawBg;
 
   return {
     archetype,
