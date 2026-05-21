@@ -672,7 +672,13 @@ function FaqModule({ section, brain, site }: ModuleProps) {
 /* ---------- CONTACT CTA ---------- */
 
 function ContactCtaModule({ section, brain, site }: ModuleProps) {
-  const variant = section.variant || "strong";
+  const resolved = useResolved(section, site);
+  const variant =
+    resolved.ctaVariant === "strong-band"
+      ? "strong"
+      : resolved.ctaVariant === "soft-card"
+        ? "soft"
+        : section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
