@@ -449,25 +449,26 @@ function MissionModule({ section, brain, site }: ModuleProps) {
 function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
-  const compact = section.variant === "compact";
   const dark = isDarkBg(section.background_style);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
   const storytelling = getStorytellingMode(site.recipe);
   const showImage =
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
-  const pad = paddingFor(section, site);
+  const resolved = useResolved(section, site);
+  const gridShowsCardImage =
+    resolved.gridDensity === "compact" && resolved.settings.imageScale === "large";
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
       bg={section.background_style}
-      className={pad}
+      className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
-        {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
+        {section.title ? <h2 className={resolved.headlineClass}>{section.title}</h2> : null}
         {section.subtitle ? (
-          <p className={`mt-4 text-lg ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+          <p className={`${resolved.introClass} ${dark ? "text-background/80" : ""}`}>
             {section.subtitle}
           </p>
         ) : null}
@@ -476,22 +477,21 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
         <img
           src={imageUrl!}
           alt={settings.image_alt ?? section.title ?? ""}
-          className="mt-10 aspect-[16/9] w-full rounded-3xl object-cover"
+          className={`mt-10 ${resolved.mediaClass}`}
         />
       ) : null}
-      <div
-        className={`mt-12 grid gap-5 ${
-          compact ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
-        }`}
-      >
+      <div className={resolved.containerClass}>
         {items.map((s, i) => (
           <div
             key={i}
-            className={`rounded-3xl border border-border bg-card transition hover:shadow-sm ${
-              compact ? "p-5" : "p-7"
-            }`}
+            className={`${resolved.cardClass} transition hover:shadow-sm`}
           >
-            <h3 className={compact ? "text-lg" : "text-xl"}>{s.title}</h3>
+            {gridShowsCardImage ? (
+              <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
+            ) : null}
+            <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
+              {s.title}
+            </h3>
             {s.description ? (
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
             ) : null}
