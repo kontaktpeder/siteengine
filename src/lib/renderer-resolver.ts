@@ -99,6 +99,16 @@ function mergeSettings(
       menuStyle: "signature_dishes",
       faqWeight: "compact_footer",
     },
+    food_popup_minimal: {
+      pacing: "tight",
+      imageScale: "full",
+      ctaIntensity: "strong",
+      heroMode: "product_first",
+      mediaProminence: "hero_dominant",
+      storyWeight: "snippet",
+      menuStyle: "signature_dishes",
+      faqWeight: "compact_footer",
+    },
   };
   const d = defaultsByArchetype[archetype];
   return {
