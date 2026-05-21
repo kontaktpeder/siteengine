@@ -4,6 +4,8 @@ import { ARCHETYPE_CONFIGS } from "@/lib/archetype-config";
 
 const SHARED_IMAGE =
   "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=80";
+const FOOD_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1606851094291-6efae152bb87?w=1600&q=80";
 
 const SHARED_COPY = {
   heroTitle: "Signatur opplevelse",
