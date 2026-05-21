@@ -336,6 +336,27 @@ function HeroModule({ section, brain, site }: ModuleProps) {
 function TrustStripModule({ section, brain, site }: ModuleProps) {
   const items = normalizeTrustPoints(brain?.trust_points);
   if (!items.length) return null;
+  const resolved = useResolved(section, site);
+  if (resolved.presentation === "food_offer_strip") {
+    return (
+      <Container
+        id={sectionAnchor(section)}
+        bg={section.background_style}
+        className={resolved.sectionClass}
+      >
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-6 text-sm">
+          {items.map((it, i) => (
+            <span key={i} className="font-medium text-foreground">
+              <span className="text-primary">•</span> {it.label}
+              {it.description ? (
+                <span className="ml-1 text-muted-foreground">— {it.description}</span>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      </Container>
+    );
+  }
   return (
     <Container id={sectionAnchor(section)} bg={section.background_style} className={layoutFor(section, site).root}>
       <div className="grid grid-cols-2 gap-x-8 gap-y-6 rounded-3xl border border-border bg-card p-8 md:grid-cols-4">
