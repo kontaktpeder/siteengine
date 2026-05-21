@@ -226,7 +226,16 @@ function StudioEditor() {
     rhythm_strategy: (r as { rhythm_strategy?: string } | null)?.rhythm_strategy ?? "varied",
     compression_policy: (r as { compression_policy?: string } | null)?.compression_policy ?? "preserve_detail",
     creative_direction: (r as { creative_direction?: string | null } | null)?.creative_direction ?? "",
+    page_template:
+      ((r as { page_template?: string } | null)?.page_template as PageTemplate | undefined) ??
+      "organization_documentary",
+    visual_tone: (r as { visual_tone?: string | null } | null)?.visual_tone ?? "",
   });
+
+  const initialFormatBrief: FormatBrief = parseFormatBrief(
+    (bExt.format_brief as unknown) ?? EMPTY_FORMAT_BRIEF,
+  );
+  const [formatBrief, setFormatBrief] = useState<FormatBrief>(initialFormatBrief);
 
   if (!c) {
     return (
