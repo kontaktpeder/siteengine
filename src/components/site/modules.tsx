@@ -757,7 +757,7 @@ function ProofModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section)}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         surface={resolved.sectionSurfaceClass}
         className={resolved.sectionClass}
       >
