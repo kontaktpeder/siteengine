@@ -194,6 +194,7 @@ export const upsertBrain = createServerFn({ method: "POST" })
       memorable_takeaway: (data.memorable_takeaway as string) ?? null,
       representative_scene: (data.representative_scene as string) ?? null,
       desired_feelings: (data.desired_feelings as string) ?? null,
+      format_brief: (data.format_brief ?? {}) as never,
     } as never;
 
     if (existing && existing.length) {
@@ -237,6 +238,8 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       rhythm_strategy?: string | null;
       compression_policy?: string | null;
       creative_direction?: string | null;
+      page_template?: string | null;
+      visual_tone?: string | null;
     }) => input,
   )
   .handler(async ({ data }) => {
@@ -270,7 +273,9 @@ export const upsertRecipe = createServerFn({ method: "POST" })
       rhythm_strategy: data.rhythm_strategy ?? "varied",
       compression_policy: data.compression_policy ?? "preserve_detail",
       creative_direction: data.creative_direction ?? null,
-    };
+      page_template: data.page_template ?? "organization_documentary",
+      visual_tone: data.visual_tone ?? null,
+    } as never;
 
     if (existing && existing.length) {
       const { data: row, error } = await supabaseAdmin
@@ -737,7 +742,7 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       "problem_statement", "solution_statement", "trust_points", "services", "partners",
       "faq", "cta_primary_label", "cta_primary_href", "cta_secondary_label", "cta_secondary_href",
       "flagship_story", "emotional_trigger", "anti_brand", "memorable_takeaway",
-      "representative_scene", "desired_feelings",
+      "representative_scene", "desired_feelings", "format_brief",
     ];
     const brainPatch: Record<string, unknown> = { client_id };
     for (const k of brainAllowed) {
@@ -767,11 +772,16 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
 
     // 3. Recipe
     const r = suggestion.recipe;
-    const { data: existingRecipe } = await supabaseAdmin
+    const { data: existingRecipeRow } = await supabaseAdmin
       .from("site_recipes")
-      .select("id")
+      .select("*")
       .eq("client_id", client_id)
       .limit(1);
+    const existingRecipe = existingRecipeRow;
+    const existingPageTemplate =
+      (existingRecipeRow?.[0] as { page_template?: string } | undefined)?.page_template ?? null;
+    const existingVisualTone =
+      (existingRecipeRow?.[0] as { visual_tone?: string } | undefined)?.visual_tone ?? null;
     const recipePayload = {
       client_id,
       recipe_type: r.recipe_type,
@@ -792,7 +802,9 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       rhythm_strategy: r.rhythm_strategy ?? "varied",
       compression_policy: r.compression_policy ?? "preserve_detail",
       creative_direction: r.creative_direction ?? null,
-    };
+      page_template: existingPageTemplate ?? "organization_documentary",
+      visual_tone: existingVisualTone ?? null,
+    } as never;
     if (existingRecipe && existingRecipe.length) {
       const { error } = await supabaseAdmin
         .from("site_recipes")

@@ -9,6 +9,14 @@ export type InformationBudget = "scannable_20s" | "standard" | "documentary_deep
 
 export type HeroJob = "create_craving" | "build_trust" | "explain_offer" | "book_contact";
 
+export type VisualVolume = "quiet" | "medium" | "loud";
+export type CopyStyle =
+  | "editorial_warm"
+  | "documentary_calm"
+  | "punchy_minimal"
+  | "playful_loud"
+  | "neutral";
+
 export interface FormatBrief {
   digital_object: DigitalObject;
   feels_like: string[];
@@ -18,6 +26,9 @@ export interface FormatBrief {
   first_3_seconds: string;
   anti_patterns?: string[];
   digital_object_note?: string;
+  visual_volume?: VisualVolume;
+  copy_style?: CopyStyle;
+  section_ceiling_override?: number;
 }
 
 export const EMPTY_FORMAT_BRIEF: FormatBrief = {
@@ -38,6 +49,14 @@ const DIGITAL_OBJECTS: DigitalObject[] = [
 ];
 const INFO_BUDGETS: InformationBudget[] = ["scannable_20s", "standard", "documentary_deep"];
 const HERO_JOBS: HeroJob[] = ["create_craving", "build_trust", "explain_offer", "book_contact"];
+const VISUAL_VOLUMES: VisualVolume[] = ["quiet", "medium", "loud"];
+const COPY_STYLES: CopyStyle[] = [
+  "editorial_warm",
+  "documentary_calm",
+  "punchy_minimal",
+  "playful_loud",
+  "neutral",
+];
 
 function isDigitalObject(v: unknown): v is DigitalObject {
   return typeof v === "string" && (DIGITAL_OBJECTS as string[]).includes(v);
@@ -47,6 +66,12 @@ function isInfoBudget(v: unknown): v is InformationBudget {
 }
 function isHeroJob(v: unknown): v is HeroJob {
   return typeof v === "string" && (HERO_JOBS as string[]).includes(v);
+}
+function isVisualVolume(v: unknown): v is VisualVolume {
+  return typeof v === "string" && (VISUAL_VOLUMES as string[]).includes(v);
+}
+function isCopyStyle(v: unknown): v is CopyStyle {
+  return typeof v === "string" && (COPY_STYLES as string[]).includes(v);
 }
 function stringArray(v: unknown, max: number): string[] {
   if (!Array.isArray(v)) return [];
@@ -59,6 +84,12 @@ function stringArray(v: unknown, max: number): string[] {
 export function parseFormatBrief(raw: unknown): FormatBrief {
   if (!raw || typeof raw !== "object") return { ...EMPTY_FORMAT_BRIEF };
   const o = raw as Record<string, unknown>;
+  const ceiling =
+    typeof o.section_ceiling_override === "number" &&
+    o.section_ceiling_override > 0 &&
+    o.section_ceiling_override < 30
+      ? Math.floor(o.section_ceiling_override)
+      : undefined;
   return {
     digital_object: isDigitalObject(o.digital_object)
       ? o.digital_object
@@ -74,5 +105,9 @@ export function parseFormatBrief(raw: unknown): FormatBrief {
       typeof o.digital_object_note === "string"
         ? o.digital_object_note.slice(0, 500)
         : undefined,
+    visual_volume: isVisualVolume(o.visual_volume) ? o.visual_volume : undefined,
+    copy_style: isCopyStyle(o.copy_style) ? o.copy_style : undefined,
+    section_ceiling_override: ceiling,
   };
 }
+

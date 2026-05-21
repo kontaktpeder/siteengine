@@ -78,7 +78,7 @@ export function buildClientContextPacket(args: {
     } as FormatBrief,
     identity,
     template_config: {
-      section_ceiling: cfg.section_ceiling,
+      section_ceiling: parsed.section_ceiling_override ?? cfg.section_ceiling,
       allowed_modules:
         cfg.allowed_modules === "poster_modules"
           ? [...POSTER_MODULE_TYPES]

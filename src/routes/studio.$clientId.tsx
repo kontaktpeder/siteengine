@@ -25,6 +25,13 @@ import type {
   SiteRecipe,
 } from "@/lib/site-types";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  EMPTY_FORMAT_BRIEF,
+  parseFormatBrief,
+  type FormatBrief,
+} from "@/lib/format-brief";
+import { PAGE_TEMPLATES, type PageTemplate } from "@/lib/page-templates";
+import { buildClientContextPacket } from "@/lib/client-context-packet";
 
 export const Route = createFileRoute("/studio/$clientId")({
   loader: ({ params }) => getClientBundle({ data: { id: params.clientId } }),
@@ -126,14 +133,14 @@ function JsonField({
   );
 }
 
-type Tab = "client" | "brain" | "recipe" | "sections";
+type Tab = "format" | "client" | "brain" | "recipe" | "sections";
 
 function StudioEditor() {
   const data = Route.useLoaderData() as Bundle;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("brain");
+  const [tab, setTab] = useState<Tab>("format");
   const [suggestion, setSuggestion] = useState<AiSuggestion | null>(null);
 
   const c = data.client;
@@ -219,7 +226,16 @@ function StudioEditor() {
     rhythm_strategy: (r as { rhythm_strategy?: string } | null)?.rhythm_strategy ?? "varied",
     compression_policy: (r as { compression_policy?: string } | null)?.compression_policy ?? "preserve_detail",
     creative_direction: (r as { creative_direction?: string | null } | null)?.creative_direction ?? "",
+    page_template:
+      ((r as { page_template?: string } | null)?.page_template as PageTemplate | undefined) ??
+      "organization_documentary",
+    visual_tone: (r as { visual_tone?: string | null } | null)?.visual_tone ?? "",
   });
+
+  const initialFormatBrief: FormatBrief = parseFormatBrief(
+    (bExt.format_brief as unknown) ?? EMPTY_FORMAT_BRIEF,
+  );
+  const [formatBrief, setFormatBrief] = useState<FormatBrief>(initialFormatBrief);
 
   if (!c) {
     return (
@@ -282,6 +298,51 @@ function StudioEditor() {
             rhythm_strategy: recipe.rhythm_strategy,
             compression_policy: recipe.compression_policy,
             creative_direction: recipe.creative_direction,
+            page_template: recipe.page_template,
+            visual_tone: recipe.visual_tone || null,
+          },
+        });
+      }
+      if (tab === "format") {
+        // Persist page_template + visual_tone on recipe
+        await upsertRecipe({
+          data: {
+            client_id: c!.id,
+            recipe_type: recipe.recipe_type,
+            site_type: recipe.site_type,
+            primary_intent: recipe.primary_intent,
+            design_direction: recipe.design_direction,
+            color_palette: parseJson(recipe.color_palette, {}),
+            typography: parseJson(recipe.typography, {}),
+            layout_preferences: parseJson(recipe.layout_preferences, {}),
+            module_strategy: parseJson(recipe.module_strategy, {}),
+            variant_presets: parseJson(recipe.variant_presets, {}),
+            enabled_modules: parseJson(recipe.enabled_modules, []),
+            navigation: parseJson(recipe.navigation, []),
+            footer: parseJson(recipe.footer, {}),
+            content_depth: recipe.content_depth,
+            storytelling_mode: recipe.storytelling_mode,
+            visual_proof_level: recipe.visual_proof_level,
+            rhythm_strategy: recipe.rhythm_strategy,
+            compression_policy: recipe.compression_policy,
+            creative_direction: recipe.creative_direction,
+            page_template: recipe.page_template,
+            visual_tone: recipe.visual_tone || null,
+          },
+        });
+        // Persist format_brief on brain (preserving existing brain fields)
+        await upsertBrain({
+          data: {
+            client_id: c!.id,
+            ...brain,
+            audience: parseJson(brain.audience),
+            brand_keywords: parseJson(brain.brand_keywords),
+            tone_keywords: parseJson(brain.tone_keywords),
+            trust_points: parseJson(brain.trust_points),
+            services: parseJson(brain.services),
+            partners: parseJson(brain.partners),
+            faq: parseJson(brain.faq),
+            format_brief: formatBrief,
           },
         });
       }
@@ -295,6 +356,7 @@ function StudioEditor() {
   }
 
   const tabs: { id: Tab; label: string }[] = [
+    { id: "format", label: "Format" },
     { id: "brain", label: "Client Brain" },
     { id: "sections", label: "Sections" },
     { id: "recipe", label: "Site Recipe (avansert)" },
@@ -368,7 +430,7 @@ function StudioEditor() {
         <div className="flex items-center gap-3">
           {msg ? <span className="text-sm text-muted-foreground">{msg}</span> : null}
           <a
-            href="/"
+            href={`/?client=${encodeURIComponent(client.slug)}`}
             target="_blank"
             rel="noreferrer"
             className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
@@ -403,6 +465,31 @@ function StudioEditor() {
           </button>
         ))}
       </div>
+
+      {tab === "format" && (
+        <FormatTab
+          recipe={recipe as unknown as RecipeState}
+          setRecipe={setRecipe as unknown as React.Dispatch<React.SetStateAction<RecipeState>>}
+          formatBrief={formatBrief}
+          setFormatBrief={setFormatBrief}
+          packetPreview={(() => {
+            try {
+              return buildClientContextPacket({
+                client: { ...(c as Client), theme: parseJson(client.theme, {}) as Client["theme"] },
+                brain: { ...(b ?? ({} as ClientBrain)), format_brief: formatBrief as never } as ClientBrain,
+                recipe: {
+                  ...((r ?? {}) as SiteRecipe),
+                  page_template: recipe.page_template,
+                  visual_tone: recipe.visual_tone || null,
+                } as SiteRecipe,
+                sections: data.sections,
+              });
+            } catch {
+              return null;
+            }
+          })()}
+        />
+      )}
 
       {tab === "client" && (
         <>
@@ -1295,3 +1382,302 @@ function MediaNotesEditor({ clientId }: { clientId: string }) {
     </Section>
   );
 }
+
+// ---------------- Format Tab ----------------
+
+function CsvInput({
+  label,
+  hint,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  hint?: string;
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+}) {
+  const text = value.join(", ");
+  return (
+    <Field label={label} hint={hint}>
+      <input
+        className={inputCls}
+        value={text}
+        placeholder={placeholder}
+        onChange={(e) =>
+          onChange(
+            e.target.value
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          )
+        }
+      />
+    </Field>
+  );
+}
+
+type RecipeState = {
+  page_template: PageTemplate;
+  visual_tone: string;
+  [key: string]: unknown;
+};
+
+function FormatTab({
+  recipe,
+  setRecipe,
+  formatBrief,
+  setFormatBrief,
+  packetPreview,
+}: {
+  recipe: RecipeState;
+  setRecipe: React.Dispatch<React.SetStateAction<RecipeState>>;
+  formatBrief: FormatBrief;
+  setFormatBrief: React.Dispatch<React.SetStateAction<FormatBrief>>;
+  packetPreview: ReturnType<typeof buildClientContextPacket> | null;
+}) {
+  const tplCfg = PAGE_TEMPLATES[recipe.page_template];
+  const tones = Object.keys(tplCfg.theme_pack);
+
+  return (
+    <>
+      <Section title="Page template (manuell — AI velger ikke dette)">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Velg digitalt format først. Dette styrer hvilken renderer og blueprint
+          som brukes, og hvilke moduler som er lovlige.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Page template" hint="organization_documentary | brand_poster | …">
+            <select
+              className={inputCls}
+              value={recipe.page_template}
+              onChange={(e) =>
+                setRecipe((r) => ({
+                  ...r,
+                  page_template: e.target.value as PageTemplate,
+                  visual_tone: "",
+                }))
+              }
+            >
+              {Object.values(PAGE_TEMPLATES).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Visual tone" hint={`Pakker for ${tplCfg.label}`}>
+            <select
+              className={inputCls}
+              value={recipe.visual_tone || tplCfg.default_visual_tone}
+              onChange={(e) => setRecipe((r) => ({ ...r, visual_tone: e.target.value }))}
+            >
+              {tones.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="mt-3 rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+          {tplCfg.description} · section ceiling {tplCfg.section_ceiling} · forbidden:{" "}
+          {tplCfg.forbidden_modules.length
+            ? tplCfg.forbidden_modules.join(", ")
+            : "—"}
+        </div>
+      </Section>
+
+      <Section title="Format Brief (følelsen / restraint)">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Disse styrer hvordan siden skal kjennes — ikke hva AI får lov til.
+          Sett dette FØR du genererer. Påkrevd: «På 3 sek skal brukeren …».
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Digital object" hint="Hva er dette? En organisasjon, en plakat, et verktøy?">
+            <select
+              className={inputCls}
+              value={formatBrief.digital_object}
+              onChange={(e) =>
+                setFormatBrief((f) => ({ ...f, digital_object: e.target.value as FormatBrief["digital_object"] }))
+              }
+            >
+              <option value="organization">organization</option>
+              <option value="popup_poster">popup_poster</option>
+              <option value="conversion_tool">conversion_tool</option>
+              <option value="editorial_room">editorial_room</option>
+              <option value="community_platform">community_platform</option>
+            </select>
+          </Field>
+          <Field label="Hero job" hint="Hva er hovedoppgaven til hero?">
+            <select
+              className={inputCls}
+              value={formatBrief.hero_job}
+              onChange={(e) =>
+                setFormatBrief((f) => ({ ...f, hero_job: e.target.value as FormatBrief["hero_job"] }))
+              }
+            >
+              <option value="create_craving">create_craving</option>
+              <option value="build_trust">build_trust</option>
+              <option value="explain_offer">explain_offer</option>
+              <option value="book_contact">book_contact</option>
+            </select>
+          </Field>
+          <Field label="Information budget" hint="Hvor mye tekst skal siden tåle?">
+            <select
+              className={inputCls}
+              value={formatBrief.information_budget}
+              onChange={(e) =>
+                setFormatBrief((f) => ({
+                  ...f,
+                  information_budget: e.target.value as FormatBrief["information_budget"],
+                }))
+              }
+            >
+              <option value="scannable_20s">scannable_20s</option>
+              <option value="standard">standard</option>
+              <option value="documentary_deep">documentary_deep</option>
+            </select>
+          </Field>
+          <Field label="Visual volume" hint="Hvor høyt skal designet rope?">
+            <select
+              className={inputCls}
+              value={formatBrief.visual_volume ?? ""}
+              onChange={(e) =>
+                setFormatBrief((f) => ({
+                  ...f,
+                  visual_volume: (e.target.value || undefined) as FormatBrief["visual_volume"],
+                }))
+              }
+            >
+              <option value="">— ikke satt —</option>
+              <option value="quiet">quiet</option>
+              <option value="medium">medium</option>
+              <option value="loud">loud</option>
+            </select>
+          </Field>
+          <Field label="Copy style" hint="Stemme i tekst">
+            <select
+              className={inputCls}
+              value={formatBrief.copy_style ?? ""}
+              onChange={(e) =>
+                setFormatBrief((f) => ({
+                  ...f,
+                  copy_style: (e.target.value || undefined) as FormatBrief["copy_style"],
+                }))
+              }
+            >
+              <option value="">— ikke satt —</option>
+              <option value="editorial_warm">editorial_warm</option>
+              <option value="documentary_calm">documentary_calm</option>
+              <option value="punchy_minimal">punchy_minimal</option>
+              <option value="playful_loud">playful_loud</option>
+              <option value="neutral">neutral</option>
+            </select>
+          </Field>
+          <Field
+            label="Section ceiling (override)"
+            hint={`Tom = bruk template-default (${tplCfg.section_ceiling}).`}
+          >
+            <input
+              type="number"
+              min={1}
+              max={20}
+              className={inputCls}
+              value={formatBrief.section_ceiling_override ?? ""}
+              onChange={(e) =>
+                setFormatBrief((f) => ({
+                  ...f,
+                  section_ceiling_override: e.target.value
+                    ? Math.max(1, Math.min(20, Number(e.target.value)))
+                    : undefined,
+                }))
+              }
+            />
+          </Field>
+        </div>
+
+        <div className="mt-4 grid gap-4">
+          <Field
+            label="First 3 seconds (påkrevd)"
+            hint="«På 3 sek skal brukeren …». Maks ~200 tegn."
+          >
+            <textarea
+              rows={2}
+              className={inputCls}
+              value={formatBrief.first_3_seconds}
+              maxLength={200}
+              onChange={(e) =>
+                setFormatBrief((f) => ({ ...f, first_3_seconds: e.target.value }))
+              }
+              placeholder="Se arancini, forstå popup, vil følge neste runde"
+            />
+          </Field>
+          <CsvInput
+            label="Feels like"
+            hint="Maks 5. Kommaseparert."
+            value={formatBrief.feels_like}
+            onChange={(v) => setFormatBrief((f) => ({ ...f, feels_like: v.slice(0, 5) }))}
+            placeholder="warm, packaging, editorial_food, limited_drop"
+          />
+          <CsvInput
+            label="Må IKKE føles som (min 3)"
+            hint="Kommaseparert. Brukes som forbudt-liste mot AI."
+            value={formatBrief.must_not_feel_like}
+            onChange={(v) =>
+              setFormatBrief((f) => ({ ...f, must_not_feel_like: v.slice(0, 8) }))
+            }
+            placeholder="startup, saas, nonprofit, restaurant_chain"
+          />
+          <CsvInput
+            label="Anti-patterns (valgfri)"
+            value={formatBrief.anti_patterns ?? []}
+            onChange={(v) => setFormatBrief((f) => ({ ...f, anti_patterns: v }))}
+            placeholder="trust_strip, services_grid"
+          />
+        </div>
+      </Section>
+
+      {packetPreview ? (
+        <Section title="ClientContextPacket (debug)">
+          <div className="grid gap-2 text-sm">
+            <div>
+              <span className="text-muted-foreground">page_template:</span>{" "}
+              <strong>{packetPreview.page_template}</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">visual_tone:</span>{" "}
+              <strong>{packetPreview.visual_tone}</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">section_ceiling:</span>{" "}
+              {packetPreview.template_config.section_ceiling}
+            </div>
+            <div>
+              <span className="text-muted-foreground">allowed_modules:</span>{" "}
+              {packetPreview.template_config.allowed_modules.join(", ")}
+            </div>
+            <div>
+              <span className="text-muted-foreground">forbidden_modules:</span>{" "}
+              {packetPreview.template_config.forbidden_modules.join(", ") || "—"}
+            </div>
+            <div>
+              <span className="text-muted-foreground">banned_phrases:</span>{" "}
+              {packetPreview.constraints.banned_phrases.join(", ")}
+            </div>
+          </div>
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Se full pakke (JSON)
+            </summary>
+            <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-background p-3 text-xs">
+              {JSON.stringify(packetPreview, null, 2)}
+            </pre>
+          </details>
+        </Section>
+      ) : null}
+    </>
+  );
+}
+
