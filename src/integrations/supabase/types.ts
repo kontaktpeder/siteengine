@@ -29,6 +29,7 @@ export type Database = {
           emotional_trigger: string | null
           faq: Json
           flagship_story: string | null
+          format_brief: Json
           id: string
           internal_notes: string | null
           long_description: string | null
@@ -63,6 +64,7 @@ export type Database = {
           emotional_trigger?: string | null
           faq?: Json
           flagship_story?: string | null
+          format_brief?: Json
           id?: string
           internal_notes?: string | null
           long_description?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           emotional_trigger?: string | null
           faq?: Json
           flagship_story?: string | null
+          format_brief?: Json
           id?: string
           internal_notes?: string | null
           long_description?: string | null
@@ -525,6 +528,7 @@ export type Database = {
           layout_preferences: Json
           module_strategy: Json
           navigation: Json
+          page_template: string
           primary_intent: string | null
           recipe_type: string
           rhythm_strategy: string
@@ -534,6 +538,7 @@ export type Database = {
           updated_at: string
           variant_presets: Json
           visual_proof_level: string
+          visual_tone: string | null
         }
         Insert: {
           client_id: string
@@ -549,6 +554,7 @@ export type Database = {
           layout_preferences?: Json
           module_strategy?: Json
           navigation?: Json
+          page_template?: string
           primary_intent?: string | null
           recipe_type?: string
           rhythm_strategy?: string
@@ -558,6 +564,7 @@ export type Database = {
           updated_at?: string
           variant_presets?: Json
           visual_proof_level?: string
+          visual_tone?: string | null
         }
         Update: {
           client_id?: string
@@ -573,6 +580,7 @@ export type Database = {
           layout_preferences?: Json
           module_strategy?: Json
           navigation?: Json
+          page_template?: string
           primary_intent?: string | null
           recipe_type?: string
           rhythm_strategy?: string
@@ -582,6 +590,7 @@ export type Database = {
           updated_at?: string
           variant_presets?: Json
           visual_proof_level?: string
+          visual_tone?: string | null
         }
         Relationships: [
           {
