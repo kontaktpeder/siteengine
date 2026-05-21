@@ -430,7 +430,7 @@ function StudioEditor() {
         <div className="flex items-center gap-3">
           {msg ? <span className="text-sm text-muted-foreground">{msg}</span> : null}
           <a
-            href="/"
+            href={`/?client=${encodeURIComponent(client.slug)}`}
             target="_blank"
             rel="noreferrer"
             className="rounded-full border border-border bg-card px-5 py-2.5 text-sm hover:bg-accent"
