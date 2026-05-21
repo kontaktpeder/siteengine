@@ -5,6 +5,8 @@ import {
   getArchetypeFromSite,
   mergeArchetypeTheme,
 } from "@/lib/archetype-config";
+import { buildClientContextPacket } from "@/lib/client-context-packet";
+import { PosterSiteShell } from "./poster/PosterSiteShell";
 
 interface NavItem {
   label: string;
