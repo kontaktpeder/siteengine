@@ -1021,6 +1021,213 @@ function ContactCtaModule({ section, brain, site }: ModuleProps) {
   );
 }
 
+/* ============================================================
+ * food_popup_minimal modules
+ * ============================================================ */
+
+function PopupHeroModule({ section, brain, site }: ModuleProps) {
+  const resolved = useResolved(section, site);
+  const settings = (section.settings ?? {}) as {
+    image_alt?: string;
+    min_height_vh?: number;
+  };
+  const imageUrl = sectionImageUrl(section);
+  const title = section.title ?? brain?.short_description ?? "Popup";
+  const subtitle = section.subtitle ?? "";
+  const eyebrow = section.eyebrow ?? "Popup";
+  const cta = resolveCta(section, brain);
+  const minH = settings.min_height_vh ?? 85;
+  return (
+    <section
+      id={sectionAnchor(section) ?? "topp"}
+      className="relative w-full overflow-hidden bg-foreground"
+      style={{ minHeight: `${minH}vh` }}
+    >
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={settings.image_alt ?? title}
+          className="absolute inset-0 h-full w-full object-cover object-[center_45%]"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-foreground" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/5" />
+      <div
+        className="relative mx-auto flex w-full max-w-6xl flex-col justify-end px-6 py-12 md:px-10 md:py-16"
+        style={{ minHeight: `${minH}vh` }}
+      >
+        {eyebrow ? (
+          <span className="inline-flex w-fit items-center rounded-sm bg-primary px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground">
+            {eyebrow}
+          </span>
+        ) : null}
+        <h1 className="mt-5 max-w-3xl font-sans text-4xl font-semibold leading-[1.05] tracking-tight text-background md:text-6xl">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="mt-4 max-w-xl text-base text-background/85 md:text-lg">
+            {subtitle}
+          </p>
+        ) : null}
+        {cta ? (
+          <div className="mt-8">
+            <a href={cta.href} className={resolved.primaryButtonClass}>
+              {cta.label}
+            </a>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function MenuPreviewModule({ section, brain }: ModuleProps) {
+  const content = (section.content ?? {}) as {
+    items?: { title: string; description?: string; badge?: string; image_url?: string }[];
+  };
+  const items =
+    content.items && content.items.length
+      ? content.items
+      : normalizeServices(brain?.services).slice(0, 3);
+  if (!items.length) return null;
+  return (
+    <section id={sectionAnchor(section) ?? "meny"} className="w-full bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 md:px-10 md:py-16">
+        {section.eyebrow ? (
+          <span className="inline-flex items-center rounded-sm bg-foreground px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-background">
+            {section.eyebrow}
+          </span>
+        ) : null}
+        {section.title ? (
+          <h2 className="mt-3 font-sans text-3xl font-semibold tracking-tight md:text-4xl">
+            {section.title}
+          </h2>
+        ) : null}
+        <div className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible">
+          {items.slice(0, 3).map((it, i) => {
+            const img = ("image_url" in it && (it as { image_url?: string }).image_url) || null;
+            const badge =
+              ("badge" in it && (it as { badge?: string }).badge) ||
+              (i === items.length - 1 ? "Begrenset" : null);
+            return (
+              <article
+                key={i}
+                className="min-w-[78%] shrink-0 snap-start overflow-hidden rounded-lg border border-border bg-card md:min-w-0"
+              >
+                <div className="aspect-[4/5] w-full bg-muted">
+                  {img ? (
+                    <img src={img} alt={it.title} className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-sans text-base font-semibold">{it.title}</h3>
+                    {badge ? (
+                      <span className="inline-flex shrink-0 items-center rounded-sm bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                        {badge}
+                      </span>
+                    ) : null}
+                  </div>
+                  {it.description ? (
+                    <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+                      {it.description}
+                    </p>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StorySnippetModule({ section, brain }: ModuleProps) {
+  const text =
+    section.subtitle?.trim() ||
+    section.body?.trim() ||
+    (brain?.flagship_story && brain.flagship_story.length < 320 ? brain.flagship_story : null);
+  if (!text) return null;
+  return (
+    <section id={sectionAnchor(section) ?? "om"} className="w-full bg-background">
+      <div className="mx-auto w-full max-w-2xl px-6 py-10 md:px-10 md:py-14">
+        {section.eyebrow ? (
+          <span className="inline-flex items-center rounded-sm bg-foreground px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-background">
+            {section.eyebrow}
+          </span>
+        ) : null}
+        <p className="mt-4 text-base text-foreground/85 md:text-lg">{text}</p>
+      </div>
+    </section>
+  );
+}
+
+function FoodGalleryModule({ section }: ModuleProps) {
+  const content = (section.content ?? {}) as {
+    images?: { url: string; alt?: string }[];
+  };
+  const images = (content.images ?? []).slice(0, 4);
+  if (!images.length) return null;
+  return (
+    <section className="w-full bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10 md:py-14">
+        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto md:grid md:grid-cols-2 md:overflow-visible">
+          {images.map((img, i) => (
+            <img
+              key={i}
+              src={img.url}
+              alt={img.alt ?? ""}
+              className="aspect-[4/5] min-w-[70%] shrink-0 snap-start rounded-md object-cover md:min-w-0 md:aspect-[4/3]"
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DropCtaModule({ section, brain }: ModuleProps) {
+  const cta = resolveCta(section, brain);
+  return (
+    <section
+      id={sectionAnchor(section) ?? "kontakt"}
+      className="w-full bg-foreground text-background"
+    >
+      <div className="mx-auto w-full max-w-6xl px-6 py-14 md:px-10 md:py-20">
+        <div className="max-w-2xl">
+          {section.eyebrow ? (
+            <span className="inline-flex items-center rounded-sm bg-background/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-background">
+              {section.eyebrow}
+            </span>
+          ) : null}
+          {section.title ? (
+            <h2 className="mt-3 font-sans text-3xl font-semibold tracking-tight md:text-5xl">
+              {section.title}
+            </h2>
+          ) : null}
+          {section.subtitle ? (
+            <p className="mt-4 max-w-xl text-base text-background/80 md:text-lg">
+              {section.subtitle}
+            </p>
+          ) : null}
+          {cta ? (
+            <div className="mt-8">
+              <a
+                href={cta.href}
+                className="inline-flex items-center justify-center rounded-sm bg-primary px-7 py-4 text-sm font-semibold uppercase tracking-wider text-primary-foreground transition hover:opacity-90"
+              >
+                {cta.label}
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const REGISTRY: Record<string, (p: ModuleProps) => React.ReactNode> = {
   hero: HeroModule,
   trust_strip: TrustStripModule,
@@ -1031,6 +1238,11 @@ const REGISTRY: Record<string, (p: ModuleProps) => React.ReactNode> = {
   proof: ProofModule,
   faq: FaqModule,
   contact_cta: ContactCtaModule,
+  popup_hero: PopupHeroModule,
+  menu_preview: MenuPreviewModule,
+  story_snippet: StorySnippetModule,
+  food_gallery: FoodGalleryModule,
+  drop_cta: DropCtaModule,
 };
 
 export function renderModule(props: ModuleProps) {
