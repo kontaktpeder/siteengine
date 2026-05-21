@@ -4,11 +4,21 @@ import type { SiteArchetype } from "@/lib/archetype-config";
 export type Pacing = "tight" | "balanced" | "spacious";
 export type ImageScaleR = "small" | "medium" | "large" | "full";
 export type CtaIntensity = "soft" | "normal" | "strong";
+export type HeroMode = "copy_first" | "product_first";
+export type MediaProminence = "background" | "inline" | "hero_dominant";
+export type StoryWeight = "hidden" | "snippet" | "manifest";
+export type MenuStyle = "info_cards" | "signature_dishes";
+export type FaqWeight = "normal" | "compact_footer";
 
 export interface SectionRendererSettings {
   pacing?: Pacing;
   imageScale?: ImageScaleR;
   ctaIntensity?: CtaIntensity;
+  heroMode?: HeroMode;
+  mediaProminence?: MediaProminence;
+  storyWeight?: StoryWeight;
+  menuStyle?: MenuStyle;
+  faqWeight?: FaqWeight;
 }
 
 export type HeroLayout = "split-portrait" | "stacked-full" | "centered";
