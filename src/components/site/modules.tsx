@@ -231,53 +231,52 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 /* ---------- HERO ---------- */
 
 function HeroModule({ section, brain, site }: ModuleProps) {
-  const variant = section.variant || "centered";
-  const layout = (section.layout_style as LayoutStyle) || null;
   const dark = isDarkBg(section.background_style);
-  const storytelling = getStorytellingMode(site.recipe);
-  const depth = getContentDepth(section);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
-  const eyebrow = section.eyebrow ?? "Foreningen";
+  const eyebrow = section.eyebrow ?? null;
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-
-  const isSplit = variant === "split" || layout === "split";
-  const isCentered = variant === "centered" || layout === "centered";
-  const documentary = storytelling === "documentary";
+  const resolved = useResolved(section, site);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
-
-  // Hero gets its own padding shape; bump in documentary or deep
-  // Hero padding: token-driven (sectionDensity defaults to "featured" for hero).
-  const padBase = layoutFor(section, site).root;
+  const isSplit = resolved.heroLayout === "split-portrait";
+  const isCentered = resolved.heroLayout === "centered";
+  const isStacked = resolved.heroLayout === "stacked-full";
+  const cta = resolved.settings.ctaIntensity;
+  const primaryClass =
+    cta === "strong"
+      ? "inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:opacity-90"
+      : cta === "soft"
+        ? "inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+        : "inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90";
 
   return (
     <Container
       id={sectionAnchor(section)}
       bg={section.background_style}
-      className={padBase}
+      className={resolved.sectionClass}
     >
       <div
         className={
           isSplit
-            ? `grid items-center ${documentary ? "gap-16" : "gap-12"} md:grid-cols-2`
+            ? "grid items-center gap-12 md:grid-cols-2"
             : isCentered
               ? "mx-auto max-w-3xl text-center"
-              : "max-w-3xl"
+              : "max-w-4xl"
         }
       >
         <div>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h1 className={`mt-6 leading-[1.05] ${documentary ? "text-5xl md:text-8xl" : "text-5xl md:text-7xl"}`}>{title}</h1>
+          {eyebrow ? <Eyebrow dark={dark}>{eyebrow}</Eyebrow> : null}
+          <h1 className={resolved.headlineClass}>{title}</h1>
           {subtitle ? (
             <p
-              className={`mt-6 max-w-2xl text-lg md:text-xl ${
-                isCentered ? "mx-auto" : ""
-              } ${dark ? "text-background/80" : "text-muted-foreground"}`}
+              className={`${resolved.introClass} ${isCentered ? "mx-auto" : ""} ${
+                dark ? "text-background/80" : ""
+              }`}
             >
               {subtitle}
             </p>
@@ -286,7 +285,11 @@ function HeroModule({ section, brain, site }: ModuleProps) {
             <div
               className={`mt-10 flex flex-wrap gap-3 ${isCentered ? "justify-center" : ""}`}
             >
-              {primary ? <PrimaryButton href={primary.href}>{primary.label}</PrimaryButton> : null}
+              {primary ? (
+                <a href={primary.href} className={primaryClass}>
+                  {primary.label}
+                </a>
+              ) : null}
               {secondary ? <GhostButton href={secondary.href}>{secondary.label}</GhostButton> : null}
             </div>
           )}
@@ -296,17 +299,17 @@ function HeroModule({ section, brain, site }: ModuleProps) {
             <img
               src={imageUrl}
               alt={settings.image_alt ?? section.title ?? ""}
-              className={`w-full rounded-3xl object-cover ${documentary ? "aspect-[4/5] md:min-h-[32rem]" : "aspect-[4/5]"}`}
+              className={resolved.mediaClass}
             />
           ) : (
-            <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
+            <div className={`${resolved.imageAspect} w-full rounded-3xl bg-secondary/60`} />
           )
         ) : null}
-        {!isSplit && imageUrl && documentary ? (
+        {isStacked && imageUrl ? (
           <img
             src={imageUrl}
             alt={settings.image_alt ?? section.title ?? ""}
-            className="mt-12 aspect-[16/9] w-full rounded-3xl object-cover"
+            className={`mt-12 ${resolved.mediaClass}`}
           />
         ) : null}
       </div>
