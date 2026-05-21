@@ -466,6 +466,31 @@ function StudioEditor() {
         ))}
       </div>
 
+      {tab === "format" && (
+        <FormatTab
+          recipe={recipe}
+          setRecipe={setRecipe}
+          formatBrief={formatBrief}
+          setFormatBrief={setFormatBrief}
+          packetPreview={(() => {
+            try {
+              return buildClientContextPacket({
+                client: { ...(c as Client), theme: parseJson(client.theme, {}) as Client["theme"] },
+                brain: { ...(b ?? ({} as ClientBrain)), format_brief: formatBrief as never } as ClientBrain,
+                recipe: {
+                  ...((r ?? {}) as SiteRecipe),
+                  page_template: recipe.page_template,
+                  visual_tone: recipe.visual_tone || null,
+                } as SiteRecipe,
+                sections: data.sections,
+              });
+            } catch {
+              return null;
+            }
+          })()}
+        />
+      )}
+
       {tab === "client" && (
         <>
           <Section title="Grunninfo">
