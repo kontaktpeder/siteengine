@@ -59,6 +59,7 @@ export interface ResolvedRenderer {
   eyebrowClass: string;
   primaryButtonClass: string;
   sectionSurfaceClass: string;
+  effectiveBackgroundStyle: string | null;
 }
 
 function mergeSettings(
