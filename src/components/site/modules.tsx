@@ -382,7 +382,7 @@ function TrustStripModule({ section, brain, site }: ModuleProps) {
     return (
       <Container
         id={sectionAnchor(section)}
-        bg={section.background_style}
+        bg={resolved.effectiveBackgroundStyle}
         className={resolved.sectionClass}
       >
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-6 text-sm">
