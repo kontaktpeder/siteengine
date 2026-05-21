@@ -1,5 +1,10 @@
 import type { SiteData, ThemeTokens } from "@/lib/site-types";
 import { renderModule } from "./modules";
+import {
+  getArchetypeConfig,
+  getArchetypeFromSite,
+  mergeArchetypeTheme,
+} from "@/lib/archetype-config";
 
 interface NavItem {
   label: string;
