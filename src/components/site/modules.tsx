@@ -428,7 +428,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
     return (
       <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
         <div className={proseDepthClass(depth)}>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
+          <Eyebrow dark={dark}>{fallbackEyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
@@ -467,7 +467,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
     <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
       <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
+          <Eyebrow dark={dark}>{fallbackEyebrow}</Eyebrow>
           <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
