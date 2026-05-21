@@ -468,8 +468,8 @@ function StudioEditor() {
 
       {tab === "format" && (
         <FormatTab
-          recipe={recipe}
-          setRecipe={setRecipe}
+          recipe={recipe as unknown as RecipeState}
+          setRecipe={setRecipe as unknown as React.Dispatch<React.SetStateAction<RecipeState>>}
           formatBrief={formatBrief}
           setFormatBrief={setFormatBrief}
           packetPreview={(() => {
