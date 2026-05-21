@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudioIndexRouteImport } from './routes/studio.index'
 import { Route as StudioBrainRouteImport } from './routes/studio.brain'
 import { Route as StudioClientIdRouteImport } from './routes/studio.$clientId'
+import { Route as DevArchetypeSliceRouteImport } from './routes/dev.archetype-slice'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,15 +35,22 @@ const StudioClientIdRoute = StudioClientIdRouteImport.update({
   path: '/studio/$clientId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevArchetypeSliceRoute = DevArchetypeSliceRouteImport.update({
+  id: '/dev/archetype-slice',
+  path: '/dev/archetype-slice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dev/archetype-slice': typeof DevArchetypeSliceRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dev/archetype-slice': typeof DevArchetypeSliceRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio': typeof StudioIndexRoute
@@ -50,20 +58,38 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dev/archetype-slice': typeof DevArchetypeSliceRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/studio/$clientId' | '/studio/brain' | '/studio/'
+  fullPaths:
+    | '/'
+    | '/dev/archetype-slice'
+    | '/studio/$clientId'
+    | '/studio/brain'
+    | '/studio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/studio/$clientId' | '/studio/brain' | '/studio'
-  id: '__root__' | '/' | '/studio/$clientId' | '/studio/brain' | '/studio/'
+  to:
+    | '/'
+    | '/dev/archetype-slice'
+    | '/studio/$clientId'
+    | '/studio/brain'
+    | '/studio'
+  id:
+    | '__root__'
+    | '/'
+    | '/dev/archetype-slice'
+    | '/studio/$clientId'
+    | '/studio/brain'
+    | '/studio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DevArchetypeSliceRoute: typeof DevArchetypeSliceRoute
   StudioClientIdRoute: typeof StudioClientIdRoute
   StudioBrainRoute: typeof StudioBrainRoute
   StudioIndexRoute: typeof StudioIndexRoute
@@ -99,11 +125,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioClientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/archetype-slice': {
+      id: '/dev/archetype-slice'
+      path: '/dev/archetype-slice'
+      fullPath: '/dev/archetype-slice'
+      preLoaderRoute: typeof DevArchetypeSliceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DevArchetypeSliceRoute: DevArchetypeSliceRoute,
   StudioClientIdRoute: StudioClientIdRoute,
   StudioBrainRoute: StudioBrainRoute,
   StudioIndexRoute: StudioIndexRoute,

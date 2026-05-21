@@ -20,6 +20,17 @@ import {
   type StorytellingMode,
 } from "@/lib/render-contract";
 import { getSectionLayoutClasses } from "@/lib/section-layout";
+import { getArchetypeFromSite } from "@/lib/archetype-config";
+import { resolveRenderer, type ResolvedRenderer } from "@/lib/renderer-resolver";
+import type { ThemeTokens } from "@/lib/site-types";
+
+function useResolved(section: PageSection, site: SiteData): ResolvedRenderer {
+  const archetype = getArchetypeFromSite(
+    site.recipe as unknown as Record<string, unknown> | null,
+    site.brain as unknown as Record<string, unknown> | null,
+  );
+  return resolveRenderer(section, archetype, (site.client.theme ?? {}) as ThemeTokens);
+}
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
@@ -220,53 +231,52 @@ function resolveCta(section: PageSection, brain: ClientBrain | null) {
 /* ---------- HERO ---------- */
 
 function HeroModule({ section, brain, site }: ModuleProps) {
-  const variant = section.variant || "centered";
-  const layout = (section.layout_style as LayoutStyle) || null;
   const dark = isDarkBg(section.background_style);
-  const storytelling = getStorytellingMode(site.recipe);
-  const depth = getContentDepth(section);
   const title = section.title ?? brain?.short_description ?? "Velkommen";
   const subtitle = section.subtitle ?? brain?.long_description ?? "";
-  const eyebrow = section.eyebrow ?? "Foreningen";
+  const eyebrow = section.eyebrow ?? null;
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-
-  const isSplit = variant === "split" || layout === "split";
-  const isCentered = variant === "centered" || layout === "centered";
-  const documentary = storytelling === "documentary";
+  const resolved = useResolved(section, site);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
-
-  // Hero gets its own padding shape; bump in documentary or deep
-  // Hero padding: token-driven (sectionDensity defaults to "featured" for hero).
-  const padBase = layoutFor(section, site).root;
+  const isSplit = resolved.heroLayout === "split-portrait";
+  const isCentered = resolved.heroLayout === "centered";
+  const isStacked = resolved.heroLayout === "stacked-full";
+  const cta = resolved.settings.ctaIntensity;
+  const primaryClass =
+    cta === "strong"
+      ? "inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:opacity-90"
+      : cta === "soft"
+        ? "inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+        : "inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:opacity-90";
 
   return (
     <Container
       id={sectionAnchor(section)}
       bg={section.background_style}
-      className={padBase}
+      className={resolved.sectionClass}
     >
       <div
         className={
           isSplit
-            ? `grid items-center ${documentary ? "gap-16" : "gap-12"} md:grid-cols-2`
+            ? "grid items-center gap-12 md:grid-cols-2"
             : isCentered
               ? "mx-auto max-w-3xl text-center"
-              : "max-w-3xl"
+              : "max-w-4xl"
         }
       >
         <div>
-          <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h1 className={`mt-6 leading-[1.05] ${documentary ? "text-5xl md:text-8xl" : "text-5xl md:text-7xl"}`}>{title}</h1>
+          {eyebrow ? <Eyebrow dark={dark}>{eyebrow}</Eyebrow> : null}
+          <h1 className={resolved.headlineClass}>{title}</h1>
           {subtitle ? (
             <p
-              className={`mt-6 max-w-2xl text-lg md:text-xl ${
-                isCentered ? "mx-auto" : ""
-              } ${dark ? "text-background/80" : "text-muted-foreground"}`}
+              className={`${resolved.introClass} ${isCentered ? "mx-auto" : ""} ${
+                dark ? "text-background/80" : ""
+              }`}
             >
               {subtitle}
             </p>
@@ -275,7 +285,11 @@ function HeroModule({ section, brain, site }: ModuleProps) {
             <div
               className={`mt-10 flex flex-wrap gap-3 ${isCentered ? "justify-center" : ""}`}
             >
-              {primary ? <PrimaryButton href={primary.href}>{primary.label}</PrimaryButton> : null}
+              {primary ? (
+                <a href={primary.href} className={primaryClass}>
+                  {primary.label}
+                </a>
+              ) : null}
               {secondary ? <GhostButton href={secondary.href}>{secondary.label}</GhostButton> : null}
             </div>
           )}
@@ -285,17 +299,17 @@ function HeroModule({ section, brain, site }: ModuleProps) {
             <img
               src={imageUrl}
               alt={settings.image_alt ?? section.title ?? ""}
-              className={`w-full rounded-3xl object-cover ${documentary ? "aspect-[4/5] md:min-h-[32rem]" : "aspect-[4/5]"}`}
+              className={resolved.mediaClass}
             />
           ) : (
-            <div className="aspect-[4/5] w-full rounded-3xl bg-secondary/60" />
+            <div className={`${resolved.imageAspect} w-full rounded-3xl bg-secondary/60`} />
           )
         ) : null}
-        {!isSplit && imageUrl && documentary ? (
+        {isStacked && imageUrl ? (
           <img
             src={imageUrl}
             alt={settings.image_alt ?? section.title ?? ""}
-            className="mt-12 aspect-[16/9] w-full rounded-3xl object-cover"
+            className={`mt-12 ${resolved.mediaClass}`}
           />
         ) : null}
       </div>
@@ -344,7 +358,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
       <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
         <div className={proseDepthClass(depth)}>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
               className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"}`}
@@ -383,7 +397,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
       <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
               className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"} ${proseDepthClass(depth)}`}
@@ -435,25 +449,26 @@ function MissionModule({ section, brain, site }: ModuleProps) {
 function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
-  const compact = section.variant === "compact";
   const dark = isDarkBg(section.background_style);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
   const storytelling = getStorytellingMode(site.recipe);
   const showImage =
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
-  const pad = paddingFor(section, site);
+  const resolved = useResolved(section, site);
+  const gridShowsCardImage =
+    resolved.gridDensity === "compact" && resolved.settings.imageScale === "large";
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
       bg={section.background_style}
-      className={pad}
+      className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
         {section.eyebrow ? <Eyebrow dark={dark}>{section.eyebrow}</Eyebrow> : null}
-        {section.title ? <h2 className="mt-3 text-4xl md:text-5xl">{section.title}</h2> : null}
+        {section.title ? <h2 className={resolved.headlineClass}>{section.title}</h2> : null}
         {section.subtitle ? (
-          <p className={`mt-4 text-lg ${dark ? "text-background/80" : "text-muted-foreground"}`}>
+          <p className={`${resolved.introClass} ${dark ? "text-background/80" : ""}`}>
             {section.subtitle}
           </p>
         ) : null}
@@ -462,22 +477,21 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
         <img
           src={imageUrl!}
           alt={settings.image_alt ?? section.title ?? ""}
-          className="mt-10 aspect-[16/9] w-full rounded-3xl object-cover"
+          className={`mt-10 ${resolved.mediaClass}`}
         />
       ) : null}
-      <div
-        className={`mt-12 grid gap-5 ${
-          compact ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
-        }`}
-      >
+      <div className={resolved.containerClass}>
         {items.map((s, i) => (
           <div
             key={i}
-            className={`rounded-3xl border border-border bg-card transition hover:shadow-sm ${
-              compact ? "p-5" : "p-7"
-            }`}
+            className={`${resolved.cardClass} transition hover:shadow-sm`}
           >
-            <h3 className={compact ? "text-lg" : "text-xl"}>{s.title}</h3>
+            {gridShowsCardImage ? (
+              <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
+            ) : null}
+            <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
+              {s.title}
+            </h3>
             {s.description ? (
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
             ) : null}
@@ -658,13 +672,19 @@ function FaqModule({ section, brain, site }: ModuleProps) {
 /* ---------- CONTACT CTA ---------- */
 
 function ContactCtaModule({ section, brain, site }: ModuleProps) {
-  const variant = section.variant || "strong";
+  const resolved = useResolved(section, site);
+  const variant =
+    resolved.ctaVariant === "strong-band"
+      ? "strong"
+      : resolved.ctaVariant === "soft-card"
+        ? "soft"
+        : section.variant || "strong";
   const primary = resolveCta(section, brain);
   const secondary =
     brain?.cta_secondary_label && brain?.cta_secondary_href
       ? { label: brain.cta_secondary_label, href: brain.cta_secondary_href }
       : null;
-  const pad = layoutFor(section, site).root;
+  const pad = resolved.sectionClass;
 
   if (variant === "soft") {
     return (
