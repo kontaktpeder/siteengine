@@ -9,6 +9,14 @@ export type InformationBudget = "scannable_20s" | "standard" | "documentary_deep
 
 export type HeroJob = "create_craving" | "build_trust" | "explain_offer" | "book_contact";
 
+export type VisualVolume = "quiet" | "medium" | "loud";
+export type CopyStyle =
+  | "editorial_warm"
+  | "documentary_calm"
+  | "punchy_minimal"
+  | "playful_loud"
+  | "neutral";
+
 export interface FormatBrief {
   digital_object: DigitalObject;
   feels_like: string[];
@@ -18,6 +26,9 @@ export interface FormatBrief {
   first_3_seconds: string;
   anti_patterns?: string[];
   digital_object_note?: string;
+  visual_volume?: VisualVolume;
+  copy_style?: CopyStyle;
+  section_ceiling_override?: number;
 }
 
 export const EMPTY_FORMAT_BRIEF: FormatBrief = {
