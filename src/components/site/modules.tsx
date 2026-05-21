@@ -358,7 +358,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
       <Container id={sectionAnchor(section) ?? "om"} bg={section.background_style} className={pad}>
         <div className={proseDepthClass(depth)}>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
               className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"}`}
@@ -397,7 +397,7 @@ function MissionModule({ section, brain, site }: ModuleProps) {
       <div className={`grid gap-12 ${showSideImage ? "md:grid-cols-2" : "md:grid-cols-2"}`}>
         <div>
           <Eyebrow dark={dark}>{eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? "Vi skaper trygge arenaer."}</h2>
+          <h2 className="mt-4 text-4xl md:text-5xl">{brain?.mission ?? section.title ?? ""}</h2>
           {section.subtitle ? (
             <p
               className={`mt-4 whitespace-pre-line text-lg ${dark ? "text-background/85" : "text-muted-foreground"} ${proseDepthClass(depth)}`}
