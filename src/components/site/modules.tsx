@@ -20,6 +20,17 @@ import {
   type StorytellingMode,
 } from "@/lib/render-contract";
 import { getSectionLayoutClasses } from "@/lib/section-layout";
+import { getArchetypeFromSite } from "@/lib/archetype-config";
+import { resolveRenderer, type ResolvedRenderer } from "@/lib/renderer-resolver";
+import type { ThemeTokens } from "@/lib/site-types";
+
+function useResolved(section: PageSection, site: SiteData): ResolvedRenderer {
+  const archetype = getArchetypeFromSite(
+    site.recipe as unknown as Record<string, unknown> | null,
+    site.brain as unknown as Record<string, unknown> | null,
+  );
+  return resolveRenderer(section, archetype, (site.client.theme ?? {}) as ThemeTokens);
+}
 
 function asArray<T>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
