@@ -4,6 +4,7 @@ import type { SectionRendererSettings } from "@/lib/renderer-resolver";
 export type SiteArchetype =
   | "nonprofit_documentary"
   | "food_popup_editorial"
+  | "food_popup_minimal"
   | "neutral";
 
 export interface ArchetypeConfig {
@@ -132,6 +133,70 @@ export const ARCHETYPE_CONFIGS: Record<SiteArchetype, ArchetypeConfig> = {
       contact_cta: { pacing: "tight", ctaIntensity: "strong" },
     },
   },
+  food_popup_minimal: {
+    id: "food_popup_minimal",
+    allowed_modules: [
+      "popup_hero",
+      "menu_preview",
+      "story_snippet",
+      "food_gallery",
+      "faq",
+      "drop_cta",
+    ],
+    forbidden_modules: [
+      "trust_strip",
+      "mission",
+      "services_grid",
+      "activities",
+      "partners",
+      "proof",
+      "contact_cta",
+    ],
+    forbidden_assumptions: [
+      "Dette er en organisasjon med oppdrag og visjon",
+      "Siden trenger trust strip eller statistikk",
+      "Siden trenger services_grid eller tjenestekort",
+    ],
+    banned_words: [
+      "våre tjenester",
+      "vår visjon",
+      "vi tilbyr",
+      "kvalitet og innovasjon",
+      "forening",
+      "inkludering",
+      "tillit",
+    ],
+    default_theme: {
+      primaryColor: "oklch(0.58 0.20 35)",
+      primaryForegroundColor: "oklch(0.98 0.01 80)",
+      secondaryColor: "oklch(0.92 0.04 75)",
+      secondaryForegroundColor: "oklch(0.18 0.04 40)",
+      accentColor: "oklch(0.18 0.04 40)",
+      backgroundColor: "oklch(0.96 0.02 80)",
+      surfaceColor: "oklch(1 0 0)",
+      textColor: "oklch(0.15 0.02 40)",
+      borderColor: "oklch(0.88 0.04 55)",
+      mutedColor: "oklch(0.45 0.04 40)",
+      radius: "0.375rem",
+      fontStyle: "sans",
+    },
+    design_direction: "popup_drop_campaign",
+    recipe_type: "popup_drop_page",
+    primary_intent: "create_craving",
+    section_blueprint: [
+      "popup_hero",
+      "menu_preview",
+      "food_gallery",
+      "story_snippet",
+      "faq",
+      "drop_cta",
+    ],
+    default_renderer_by_module: {
+      popup_hero: { pacing: "tight", imageScale: "full", ctaIntensity: "strong" },
+      menu_preview: { pacing: "tight", imageScale: "large", ctaIntensity: "strong" },
+      drop_cta: { pacing: "tight", ctaIntensity: "strong" },
+    },
+  },
 };
 
 export function isSiteArchetype(v: unknown): v is SiteArchetype {
@@ -143,13 +208,16 @@ export function inferArchetypeFromBrain(
 ): SiteArchetype {
   if (!brain) return "neutral";
   const st = typeof brain.site_type === "string" ? brain.site_type.toLowerCase() : "";
-  if (st === "food_brand" || st === "restaurant") return "food_popup_editorial";
-  if (st === "nonprofit") return "nonprofit_documentary";
   const hay = [brain.raw_notes, brain.short_description, brain.flagship_story]
     .filter((x): x is string => typeof x === "string")
     .join(" ")
     .toLowerCase();
-  if (/popup|street food|arancini|\bmat\b|meny|gastro/.test(hay)) return "food_popup_editorial";
+  // popup-specific signals → minimal drop page
+  if (/\bpopup\b|\bpop-up\b|limited drop|street food|instagram[- ]first|\bbatch\b/.test(hay))
+    return "food_popup_minimal";
+  if (st === "food_brand" || st === "restaurant") return "food_popup_editorial";
+  if (st === "nonprofit") return "nonprofit_documentary";
+  if (/arancini|\bmat\b|meny|gastro/.test(hay)) return "food_popup_editorial";
   if (/forening|nonprofit|frivillig|inklud/.test(hay)) return "nonprofit_documentary";
   return "neutral";
 }
@@ -174,6 +242,7 @@ export function getArchetypeFromSite(
   if (brain) return inferArchetypeFromBrain(brain);
   return "neutral";
 }
+
 
 export function getArchetypeConfig(a: SiteArchetype): ArchetypeConfig {
   return ARCHETYPE_CONFIGS[a] ?? ARCHETYPE_CONFIGS.neutral;

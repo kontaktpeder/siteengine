@@ -10,6 +10,11 @@ export const SUPPORTED_MODULE_TYPES: readonly ModuleType[] = [
   "activities",
   "faq",
   "contact_cta",
+  "popup_hero",
+  "menu_preview",
+  "story_snippet",
+  "food_gallery",
+  "drop_cta",
 ] as const;
 
 export type BrainArchetype =

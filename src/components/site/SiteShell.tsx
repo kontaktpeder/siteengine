@@ -122,6 +122,9 @@ export function SiteShell({ data }: { data: SiteData }) {
       ? "[&_h1]:font-sans [&_h2]:font-sans [&_h3]:font-sans [&_h4]:font-sans"
       : "";
 
+  const isMinimal = archetype === "food_popup_minimal";
+  const navItems = isMinimal ? nav.slice(0, 2) : nav;
+
   return (
     <div
       style={style}
@@ -133,7 +136,7 @@ export function SiteShell({ data }: { data: SiteData }) {
             {data.client.name}
           </a>
           <nav className="hidden items-center gap-7 md:flex">
-            {nav.map((n, i) => (
+            {navItems.map((n, i) => (
               <a
                 key={i}
                 href={n.href}
@@ -145,7 +148,11 @@ export function SiteShell({ data }: { data: SiteData }) {
             {brain?.cta_primary_label && brain?.cta_primary_href ? (
               <a
                 href={brain.cta_primary_href}
-                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className={
+                  isMinimal
+                    ? "rounded-sm bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-wider text-primary-foreground"
+                    : "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                }
               >
                 {brain.cta_primary_label}
               </a>
@@ -154,30 +161,53 @@ export function SiteShell({ data }: { data: SiteData }) {
         </div>
       </header>
 
-      <main data-renderer-v2={import.meta.env.VITE_RENDERER_V2 === "1" ? "1" : undefined}>
+      <main
+        data-renderer-v2={import.meta.env.VITE_RENDERER_V2 === "1" ? "1" : undefined}
+        className={isMinimal ? "pb-20 md:pb-0" : undefined}
+      >
         {sections.map((s) => (
           <div key={s.id}>{renderModule({ section: s, brain, site: data })}</div>
         ))}
       </main>
 
-      <footer className="mt-10 border-t border-border bg-card">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-12 md:flex-row md:items-end md:justify-between md:px-10">
-          <div>
-            <div className="font-display text-2xl">{data.client.name}</div>
-            {footer.tagline ? (
-              <div className="mt-1 text-sm text-muted-foreground">{footer.tagline}</div>
-            ) : null}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {footer.email ? (
-              <a className="hover:text-foreground" href={`mailto:${footer.email}`}>
-                {footer.email}
-              </a>
-            ) : null}
-            <div className="mt-1">© {new Date().getFullYear()} {data.client.name}</div>
-          </div>
+      {isMinimal && brain?.cta_primary_label && brain?.cta_primary_href ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 backdrop-blur md:hidden">
+          <a
+            href={brain.cta_primary_href}
+            className="block w-full rounded-sm bg-primary py-3 text-center text-sm font-semibold uppercase tracking-wider text-primary-foreground"
+          >
+            {brain.cta_primary_label}
+          </a>
         </div>
-      </footer>
+      ) : null}
+
+      {isMinimal ? (
+        <footer className="border-t border-border bg-card">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 text-xs text-muted-foreground md:px-10">
+            <div className="font-display text-base text-foreground">{data.client.name}</div>
+            <div>© {new Date().getFullYear()}</div>
+          </div>
+        </footer>
+      ) : (
+        <footer className="mt-10 border-t border-border bg-card">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-12 md:flex-row md:items-end md:justify-between md:px-10">
+            <div>
+              <div className="font-display text-2xl">{data.client.name}</div>
+              {footer.tagline ? (
+                <div className="mt-1 text-sm text-muted-foreground">{footer.tagline}</div>
+              ) : null}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {footer.email ? (
+                <a className="hover:text-foreground" href={`mailto:${footer.email}`}>
+                  {footer.email}
+                </a>
+              ) : null}
+              <div className="mt-1">© {new Date().getFullYear()} {data.client.name}</div>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

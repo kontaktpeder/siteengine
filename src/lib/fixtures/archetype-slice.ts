@@ -39,7 +39,142 @@ const SHARED_COPY = {
 
 const NOW = new Date(0).toISOString();
 
+function minimalSections(): SiteData["sections"] {
+  const base = {
+    page_id: "slice",
+    body: null,
+    is_visible: true,
+    created_at: NOW,
+    updated_at: NOW,
+  };
+  const sections = [
+    {
+      ...base,
+      id: "slice-popup-hero",
+      module_type: "popup_hero",
+      variant: "fullbleed",
+      sort_order: 0,
+      title: "Sprø utenpå. Varm inni.",
+      subtitle: "Neste popup fredag 19:00 — Grünerløkka.",
+      eyebrow: "Popup",
+      anchor_id: "topp",
+      background_style: "default",
+      layout_style: null,
+      cta_label: "Sett av plass",
+      cta_href: "#kontakt",
+      image_url: FOOD_HERO_IMAGE,
+      content: { image_url: FOOD_HERO_IMAGE, image_alt: "Arancini" },
+      settings: { min_height_vh: 85 },
+    },
+    {
+      ...base,
+      id: "slice-menu",
+      module_type: "menu_preview",
+      variant: "default",
+      sort_order: 1,
+      title: "Signaturretter",
+      subtitle: null,
+      eyebrow: "Meny",
+      anchor_id: "meny",
+      background_style: "default",
+      layout_style: null,
+      cta_label: null,
+      cta_href: null,
+      image_url: null,
+      content: {
+        items: [
+          { title: "Arancina al ragù", description: "Vår klassiker, fra Palermo." },
+          { title: "Sfincione", description: "Sicilias gatebakst — tomat, ansjos, ost." },
+          { title: "Cannolo", description: "Sprø skall, fersk ricotta. Begrenset.", badge: "Begrenset" },
+        ],
+      },
+      settings: {},
+    },
+    {
+      ...base,
+      id: "slice-gallery",
+      module_type: "food_gallery",
+      variant: "default",
+      sort_order: 2,
+      title: null,
+      subtitle: null,
+      eyebrow: null,
+      anchor_id: null,
+      background_style: "default",
+      layout_style: null,
+      cta_label: null,
+      cta_href: null,
+      image_url: null,
+      content: {
+        images: [
+          { url: FOOD_HERO_IMAGE, alt: "Arancini close-up" },
+          { url: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&q=80", alt: "Street kitchen" },
+          { url: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=1200&q=80", alt: "Cannoli" },
+        ],
+      },
+      settings: {},
+    },
+    {
+      ...base,
+      id: "slice-story",
+      module_type: "story_snippet",
+      variant: "default",
+      sort_order: 3,
+      title: null,
+      subtitle:
+        "Det startet med en arancina på en bakgate i Palermo. Vi tar med oss smaken hjem — én popup om gangen.",
+      eyebrow: "Historien",
+      anchor_id: "om",
+      background_style: "default",
+      layout_style: null,
+      cta_label: null,
+      cta_href: null,
+      image_url: null,
+      content: {},
+      settings: {},
+    },
+    {
+      ...base,
+      id: "slice-faq",
+      module_type: "faq",
+      variant: "accordion",
+      sort_order: 4,
+      title: "Spørsmål",
+      subtitle: null,
+      eyebrow: "FAQ",
+      anchor_id: "faq",
+      background_style: "default",
+      layout_style: null,
+      cta_label: null,
+      cta_href: null,
+      image_url: null,
+      content: {},
+      settings: {},
+    },
+    {
+      ...base,
+      id: "slice-drop-cta",
+      module_type: "drop_cta",
+      variant: "default",
+      sort_order: 5,
+      title: "Når batchen er tom, er den tom.",
+      subtitle: "Følg oss på Instagram for varsel om neste drop.",
+      eyebrow: "Neste popup",
+      anchor_id: "kontakt",
+      background_style: "default",
+      layout_style: null,
+      cta_label: "Følg på Instagram",
+      cta_href: "https://instagram.com",
+      image_url: null,
+      content: {},
+      settings: {},
+    },
+  ];
+  return sections as unknown as SiteData["sections"];
+}
+
 function sectionsFor(archetype: SiteArchetype): SiteData["sections"] {
+  if (archetype === "food_popup_minimal") return minimalSections();
   const cfg = ARCHETYPE_CONFIGS[archetype];
   const base = {
     page_id: "slice",
@@ -193,7 +328,11 @@ export function buildArchetypeSliceFixture(archetype: SiteArchetype): SiteData {
   const client = {
     id: clientId,
     name:
-      archetype === "food_popup_editorial" ? "Gold of Sicily (slice)" : "Opplev-type (slice)",
+      archetype === "food_popup_minimal"
+        ? "Arancina Drop (slice)"
+        : archetype === "food_popup_editorial"
+          ? "Gold of Sicily (slice)"
+          : "Opplev-type (slice)",
     slug: "slice",
     status: "published",
     description: null,
@@ -204,7 +343,10 @@ export function buildArchetypeSliceFixture(archetype: SiteArchetype): SiteData {
   const brain = {
     id: "slice-brain",
     client_id: clientId,
-    site_type: archetype === "food_popup_editorial" ? "food_brand" : "nonprofit",
+    site_type:
+      archetype === "food_popup_editorial" || archetype === "food_popup_minimal"
+        ? "food_brand"
+        : "nonprofit",
     short_description: SHARED_COPY.heroTitle,
     long_description: SHARED_COPY.heroSubtitle,
     services: SHARED_COPY.services,

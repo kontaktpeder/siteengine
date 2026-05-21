@@ -99,6 +99,16 @@ function mergeSettings(
       menuStyle: "signature_dishes",
       faqWeight: "compact_footer",
     },
+    food_popup_minimal: {
+      pacing: "tight",
+      imageScale: "full",
+      ctaIntensity: "strong",
+      heroMode: "product_first",
+      mediaProminence: "hero_dominant",
+      storyWeight: "snippet",
+      menuStyle: "signature_dishes",
+      faqWeight: "compact_footer",
+    },
   };
   const d = defaultsByArchetype[archetype];
   return {
@@ -322,7 +332,9 @@ export function resolveRenderer(
   // Food forbids mint surface tokens — coerce to default
   const rawBg = section.background_style ?? null;
   const effectiveBackgroundStyle: string | null =
-    archetype === "food_popup_editorial" && rawBg === "mint" ? null : rawBg;
+    (archetype === "food_popup_editorial" || archetype === "food_popup_minimal") && rawBg === "mint"
+      ? null
+      : rawBg;
 
   return {
     archetype,
