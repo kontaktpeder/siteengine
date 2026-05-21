@@ -802,7 +802,9 @@ export const applyAiSuggestion = createServerFn({ method: "POST" })
       rhythm_strategy: r.rhythm_strategy ?? "varied",
       compression_policy: r.compression_policy ?? "preserve_detail",
       creative_direction: r.creative_direction ?? null,
-    };
+      page_template: existingPageTemplate ?? "organization_documentary",
+      visual_tone: existingVisualTone ?? null,
+    } as never;
     if (existingRecipe && existingRecipe.length) {
       const { error } = await supabaseAdmin
         .from("site_recipes")
