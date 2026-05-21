@@ -64,8 +64,11 @@ function sectionsFor(archetype: SiteArchetype): SiteData["sections"] {
       layout_style: isFood ? "editorial" : "split",
       cta_label: SHARED_COPY.ctaLabel,
       cta_href: SHARED_COPY.ctaHref,
-      image_url: SHARED_IMAGE,
-      content: { image_url: SHARED_IMAGE, image_alt: "Produkt" },
+      image_url: isFood ? FOOD_HERO_IMAGE : SHARED_IMAGE,
+      content: {
+        image_url: isFood ? FOOD_HERO_IMAGE : SHARED_IMAGE,
+        image_alt: isFood ? "Sicilian street food" : "Produkt",
+      },
       settings: { renderer: cfg.default_renderer_by_module.hero ?? {} },
     },
     {
