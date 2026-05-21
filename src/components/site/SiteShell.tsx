@@ -104,6 +104,16 @@ function themeToCssVars(theme: ThemeTokens | undefined | null): React.CSSPropert
 }
 
 export function SiteShell({ data }: { data: SiteData }) {
+  const packet = buildClientContextPacket({
+    client: data.client,
+    brain: data.brain,
+    recipe: data.recipe,
+    sections: data.sections,
+  });
+  if (packet.page_template === "brand_poster") {
+    return <PosterSiteShell data={{ ...data, sections: data.sections.length ? data.sections : [] }} packet={packet} />;
+  }
+
   const recipe = data.recipe;
   const nav = (Array.isArray(recipe?.navigation) ? recipe?.navigation : []) as unknown as NavItem[];
   const footer = (recipe?.footer ?? {}) as unknown as { tagline?: string; email?: string };
