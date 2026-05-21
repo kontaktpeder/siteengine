@@ -565,19 +565,22 @@ function MissionModule({ section, brain, site }: ModuleProps) {
 function ServicesGridModule({ section, brain, site }: ModuleProps) {
   const items = normalizeServices(brain?.services);
   if (!items.length) return null;
-  const dark = isDarkBg(section.background_style);
+  const resolved = useResolved(section, site);
+  const bg = resolved.effectiveBackgroundStyle;
+  const dark = isDarkBg(bg);
   const settings = (section.settings ?? {}) as { image_alt?: string };
   const imageUrl = sectionImageUrl(section);
   const storytelling = getStorytellingMode(site.recipe);
   const showImage =
     !!imageUrl && (section.layout_style === "split" || storytelling === "documentary");
-  const resolved = useResolved(section, site);
+  const isSignatureDishes = resolved.settings.menuStyle === "signature_dishes";
   const gridShowsCardImage =
-    resolved.gridDensity === "compact" && resolved.settings.imageScale === "large";
+    isSignatureDishes ||
+    (resolved.gridDensity === "compact" && resolved.settings.imageScale === "large");
   return (
     <Container
       id={sectionAnchor(section) ?? "tjenester"}
-      bg={section.background_style}
+      bg={bg}
       className={resolved.sectionClass}
     >
       <div className="max-w-2xl">
@@ -605,24 +608,46 @@ function ServicesGridModule({ section, brain, site }: ModuleProps) {
           className={`mt-10 ${resolved.mediaClass}`}
         />
       ) : null}
-      <div className={resolved.containerClass}>
-        {items.map((s, i) => (
-          <div
-            key={i}
-            className={`${resolved.cardClass} transition hover:shadow-sm`}
-          >
-            {gridShowsCardImage ? (
-              <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
-            ) : null}
-            <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
-              {s.title}
-            </h3>
-            {s.description ? (
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
-            ) : null}
-          </div>
-        ))}
-      </div>
+      {isSignatureDishes ? (
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((s, i) => (
+            <div key={i} className={resolved.cardClass}>
+              <div className="aspect-[4/3] w-full bg-muted" />
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
+                  {i === items.length - 1 ? (
+                    <span className="inline-flex shrink-0 items-center rounded-sm bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                      Begrenset
+                    </span>
+                  ) : null}
+                </div>
+                {s.description ? (
+                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                    {s.description}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={resolved.containerClass}>
+          {items.map((s, i) => (
+            <div key={i} className={`${resolved.cardClass} transition hover:shadow-sm`}>
+              {gridShowsCardImage ? (
+                <div className="mb-4 aspect-[4/3] w-full rounded-xl bg-secondary/60" />
+              ) : null}
+              <h3 className={resolved.gridDensity === "compact" ? "text-lg" : "text-xl"}>
+                {s.title}
+              </h3>
+              {s.description ? (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
     </Container>
   );
 }
