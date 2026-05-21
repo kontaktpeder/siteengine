@@ -296,7 +296,7 @@ export function resolveRenderer(
   theme: ThemeTokens,
 ): ResolvedRenderer {
   const raw = (section.settings as Record<string, unknown> | null)?.renderer;
-  const settings = mergeSettings(raw, archetype);
+  const settings = mergeSettings(raw, archetype, section.module_type);
   const presentation = presentationFor(section.module_type, archetype);
   const heroLayout: HeroLayout =
     presentation === "food_hero_drop" ? "stacked-full" : heroLayoutFor(archetype, section);
@@ -319,6 +319,11 @@ export function resolveRenderer(
         ? "mint"
         : "neutral";
 
+  // Food forbids mint surface tokens — coerce to default
+  const rawBg = section.background_style ?? null;
+  const effectiveBackgroundStyle: string | null =
+    archetype === "food_popup_editorial" && rawBg === "mint" ? null : rawBg;
+
   return {
     archetype,
     settings,
@@ -330,7 +335,7 @@ export function resolveRenderer(
     imageAspect,
     cardClass:
       presentation === "food_menu_grid"
-        ? "rounded-lg border border-border bg-card p-5"
+        ? "rounded-xl border-0 bg-card shadow-md overflow-hidden"
         : cardClassFor(gridDensity),
     mediaClass: `${imageAspect} w-full ${
       presentation === "food_hero_drop" || presentation === "food_menu_grid"
@@ -347,5 +352,6 @@ export function resolveRenderer(
     eyebrowClass: eyebrowClassFor(presentation),
     primaryButtonClass: primaryButtonClassFor(presentation, settings.ctaIntensity),
     sectionSurfaceClass: sectionSurfaceClassFor(presentation),
+    effectiveBackgroundStyle,
   };
 }
