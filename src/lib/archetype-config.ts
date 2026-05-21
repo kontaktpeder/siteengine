@@ -4,6 +4,7 @@ import type { SectionRendererSettings } from "@/lib/renderer-resolver";
 export type SiteArchetype =
   | "nonprofit_documentary"
   | "food_popup_editorial"
+  | "food_popup_minimal"
   | "neutral";
 
 export interface ArchetypeConfig {
