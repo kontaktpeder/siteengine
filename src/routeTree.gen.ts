@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudioIndexRouteImport } from './routes/studio.index'
 import { Route as StudioBrainRouteImport } from './routes/studio.brain'
 import { Route as StudioClientIdRouteImport } from './routes/studio.$clientId'
+import { Route as DevPosterRouteImport } from './routes/dev.poster'
 import { Route as DevArchetypeSliceRouteImport } from './routes/dev.archetype-slice'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const StudioClientIdRoute = StudioClientIdRouteImport.update({
   path: '/studio/$clientId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevPosterRoute = DevPosterRouteImport.update({
+  id: '/dev/poster',
+  path: '/dev/poster',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevArchetypeSliceRoute = DevArchetypeSliceRouteImport.update({
   id: '/dev/archetype-slice',
   path: '/dev/archetype-slice',
@@ -44,6 +50,7 @@ const DevArchetypeSliceRoute = DevArchetypeSliceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dev/archetype-slice': typeof DevArchetypeSliceRoute
+  '/dev/poster': typeof DevPosterRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dev/archetype-slice': typeof DevArchetypeSliceRoute
+  '/dev/poster': typeof DevPosterRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio': typeof StudioIndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dev/archetype-slice': typeof DevArchetypeSliceRoute
+  '/dev/poster': typeof DevPosterRoute
   '/studio/$clientId': typeof StudioClientIdRoute
   '/studio/brain': typeof StudioBrainRoute
   '/studio/': typeof StudioIndexRoute
@@ -68,6 +77,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dev/archetype-slice'
+    | '/dev/poster'
     | '/studio/$clientId'
     | '/studio/brain'
     | '/studio/'
@@ -75,6 +85,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dev/archetype-slice'
+    | '/dev/poster'
     | '/studio/$clientId'
     | '/studio/brain'
     | '/studio'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dev/archetype-slice'
+    | '/dev/poster'
     | '/studio/$clientId'
     | '/studio/brain'
     | '/studio/'
@@ -90,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DevArchetypeSliceRoute: typeof DevArchetypeSliceRoute
+  DevPosterRoute: typeof DevPosterRoute
   StudioClientIdRoute: typeof StudioClientIdRoute
   StudioBrainRoute: typeof StudioBrainRoute
   StudioIndexRoute: typeof StudioIndexRoute
@@ -125,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioClientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/poster': {
+      id: '/dev/poster'
+      path: '/dev/poster'
+      fullPath: '/dev/poster'
+      preLoaderRoute: typeof DevPosterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/archetype-slice': {
       id: '/dev/archetype-slice'
       path: '/dev/archetype-slice'
@@ -138,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DevArchetypeSliceRoute: DevArchetypeSliceRoute,
+  DevPosterRoute: DevPosterRoute,
   StudioClientIdRoute: StudioClientIdRoute,
   StudioBrainRoute: StudioBrainRoute,
   StudioIndexRoute: StudioIndexRoute,
@@ -145,3 +166,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
